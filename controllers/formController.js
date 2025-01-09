@@ -56,11 +56,12 @@ const getAllForms = async (req, res) => {
 // @route PUT /api/forms/:id
 // @access Public
 const updateForm = async (req, res) => {
-  const { id } = req.params; // ID of the form
+  const { id } = req.params;
   const { rentAmount, date } = req.body;
 
   try {
-    const monthYear = getMonthYear(date); // Format the date into "Mon-YY"
+    // Get the month-year representation of the input date
+    const monthYear = getMonthYear(date); // Function to return formatted "Mon-YY"
 
     // Find the form by ID
     const form = await Form.findById(id);
@@ -69,27 +70,26 @@ const updateForm = async (req, res) => {
       return res.status(404).json({ message: 'Form not found' });
     }
 
-    // Check if rent for the given month already exists
-    const existingRentIndex = form.rents.findIndex(
-      (rent) => getMonthYear(rent.date) === monthYear
-    );
+    // Check if a rent entry for the given month already exists
+    const existingRentIndex = form.rents.findIndex((rent) => getMonthYear(rent.date) === monthYear);
 
     if (existingRentIndex !== -1) {
-      // Update existing rent entry
+      // If rent for the same month exists, update it
       form.rents[existingRentIndex] = { rentAmount: Number(rentAmount), date: new Date(date) };
     } else {
-      // Add a new rent entry
+      // If no rent for the given month, add a new entry
       form.rents.push({ rentAmount: Number(rentAmount), date: new Date(date) });
     }
 
-    // Save the updated form
+    // Save the form after modification
     const updatedForm = await form.save();
     res.status(200).json(updatedForm);
   } catch (error) {
-    console.error('Error updating form:', error);
+    console.error('Error updating rent:', error);
     res.status(500).json({ message: error.message });
   }
 };
+
 
 
 // @desc Delete a form and move its data to the DuplicateForm model
