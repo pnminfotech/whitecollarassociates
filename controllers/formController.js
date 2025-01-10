@@ -1,11 +1,11 @@
 const Form = require('../models/formModels');
 const DuplicateForm = require('../models/DuplicateForm'); // Import the DuplicateForm model
-function getMonthYear() {
-  const date = new Date();
-  const month = date.getMonth() + 1; // getMonth() returns 0-11, so we add 1 to get the month number
-  const year = date.getFullYear();
-  return `${month}-${year}`;
-}
+// function getMonthYear() {
+//   const date = new Date();
+//   const month = date.getMonth() + 1; // getMonth() returns 0-11, so we add 1 to get the month number
+//   const year = date.getFullYear();
+//   return `${month}-${year}`;
+// }
 
 // @desc Save form data to the database
 // @route POST /api/forms
@@ -70,18 +70,20 @@ const updateForm = async (req, res) => {
       return res.status(404).json({ message: 'Form not found' });
     }
 
-    // Check if a rent entry for the given month already exists
-    const existingRentIndex = form.rents.findIndex((rent) => getMonthYear(rent.date) === monthYear);
+    // Find the index of the rent entry for the same month
+    const rentIndex = form.rents.findIndex(
+      (rent) => getMonthYear(rent.date) === monthYear
+    );
 
-    if (existingRentIndex !== -1) {
-      // If rent for the same month exists, update it
-      form.rents[existingRentIndex] = { rentAmount: Number(rentAmount), date: new Date(date) };
+    if (rentIndex !== -1) {
+      // If a rent entry for the same month exists, update it
+      form.rents[rentIndex] = { rentAmount: Number(rentAmount), date: new Date(date) };
     } else {
-      // If no rent for the given month, add a new entry
+      // If no rent entry exists for the month, add the new entry
       form.rents.push({ rentAmount: Number(rentAmount), date: new Date(date) });
     }
 
-    // Save the form after modification
+    // Save the updated form
     const updatedForm = await form.save();
     res.status(200).json(updatedForm);
   } catch (error) {
@@ -89,6 +91,13 @@ const updateForm = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+// Utility Function to Get Month-Year Format
+const getMonthYear = (date) => {
+  const d = new Date(date);
+  return `${d.toLocaleString('default', { month: 'short' })}-${d.getFullYear().toString().slice(-2)}`;
+};
+
 
 
 
