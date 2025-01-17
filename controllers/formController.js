@@ -165,56 +165,95 @@ const getDuplicateForms = async (req, res) => {
   }
 };
 
+const saveLeaveDate = async (req, res) => {
+  const { id, leaveDate } = req.body;
+
+  try {
+    const form = await Form.findById(id);
+    if (!form) {
+      return res.status(404).json({ message: 'Form not found' });
+    }
+
+    form.leaveDate = new Date(leaveDate);
+    await form.save();
+
+    // Check if the leave date is today and archive immediately
+    const today = new Date().setHours(0, 0, 0, 0);
+    const leaveDateObj = new Date(leaveDate).setHours(0, 0, 0, 0);
+
+    if (leaveDateObj === today) {
+      const archivedData = new Archive({ ...form._doc });
+      await archivedData.save();
+      await Form.findByIdAndDelete(id);
+    }
+
+    res.status(200).json(form);
+  } catch (error) {
+    res.status(500).json({ message: 'Error saving leave date: ' + error.message });
+  }
+};
+
 const archiveForm = async (req, res) => {
-  const { id } = req.params;
+  const { id } = req.body;
+
   try {
     const formToArchive = await Form.findById(id);
     if (!formToArchive) {
       return res.status(404).json({ message: 'Form not found' });
     }
 
-    const archive = new Archive({
-      originalFormId: formToArchive._id,
-      name: formToArchive.name,
-      roomNo: formToArchive.roomNo,
-      joiningDate: formToArchive.joiningDate,
-      depositAmount: formToArchive.depositAmount,
-      leaveDate: new Date(),
+    const archivedData = new Archive({
+      ...formToArchive._doc, // Copy all data
     });
 
-    await archive.save();
+    await archivedData.save();
     await Form.findByIdAndDelete(id);
 
-    res.status(200).json(archive);
+    res.status(200).json(archivedData);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: 'Error archiving form: ' + error.message });
   }
 };
 
-const restoreArchivedForm = async (req, res) => {
-  const { id } = req.body; // Use ID to identify the record to restore
+
+const restoreForm = async (req, res) => {
+  const { id } = req.body;
+  console.log('Restore Request ID:', id);
 
   try {
-    // Find the record in the archive
     const archivedData = await Archive.findById(id);
+    console.log('Archived Data Found:', archivedData);
+
     if (!archivedData) {
       return res.status(404).json({ message: 'Archived data not found' });
     }
 
-    // Restore the record back to the original collection
+    // Create a new form document using archived data
     const restoredForm = new Form({
       srNo: archivedData.srNo,
       name: archivedData.name,
-      roomNo: archivedData.roomNo,
       joiningDate: archivedData.joiningDate,
+      roomNo: archivedData.roomNo,
       depositAmount: archivedData.depositAmount,
-      rents: archivedData.rents, // Include rents if present
+      address: archivedData.address,
+      relativeAddress1: archivedData.relativeAddress1,
+      relativeAddress2: archivedData.relativeAddress2,
+      floorNo: archivedData.floorNo,
+      bedNo: archivedData.bedNo,
+      companyAddress: archivedData.companyAddress,
+      dateOfJoiningCollege: archivedData.dateOfJoiningCollege,
+      dob: archivedData.dob,
+      rents: archivedData.rents,
+      leaveDate: archivedData.leaveDate,
     });
 
+    // Save the restored form data
     await restoredForm.save();
+    console.log('Restored Data:', restoredForm);
 
     // Remove the record from the archive
     await Archive.findByIdAndDelete(id);
+    console.log('Archived Data Deleted:', id);
 
     res.status(200).json(restoredForm);
   } catch (error) {
@@ -224,4 +263,13 @@ const restoreArchivedForm = async (req, res) => {
 };
 
 
-module.exports = {restoreArchivedForm , archiveForm , saveForm, getAllForms, updateForm, deleteForm ,getDuplicateForms, updateRentAmount };
+const getArchivedForms = async (req, res) => {
+  try {
+    const archivedForms = await Archive.find(); // Fetch all archived forms
+    res.status(200).json(archivedForms);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching archived forms: ' + error.message });
+  }
+};
+
+module.exports = {getArchivedForms,saveLeaveDate, restoreForm  , archiveForm , saveForm, getAllForms, updateForm, deleteForm ,getDuplicateForms, updateRentAmount };
