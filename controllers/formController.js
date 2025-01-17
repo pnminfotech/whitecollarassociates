@@ -60,37 +60,25 @@ const updateForm = async (req, res) => {
   const { rentAmount, date } = req.body;
 
   try {
-    // Get the month-year representation of the input date
-    const monthYear = getMonthYear(date); // Function to return formatted "Mon-YY"
-
-    // Find the form by ID
     const form = await Form.findById(id);
+    if (!form) return res.status(404).json({ message: 'Form not found' });
 
-    if (!form) {
-      return res.status(404).json({ message: 'Form not found' });
-    }
-
-    // Find the index of the rent entry for the same month
-    const rentIndex = form.rents.findIndex(
-      (rent) => getMonthYear(rent.date) === monthYear
-    );
+    const monthYear = getMonthYear(date);
+    const rentIndex = form.rents.findIndex((rent) => getMonthYear(rent.date) === monthYear);
 
     if (rentIndex !== -1) {
-      // If a rent entry for the same month exists, update it
       form.rents[rentIndex] = { rentAmount: Number(rentAmount), date: new Date(date) };
     } else {
-      // If no rent entry exists for the month, add the new entry
       form.rents.push({ rentAmount: Number(rentAmount), date: new Date(date) });
     }
 
-    // Save the updated form
     const updatedForm = await form.save();
     res.status(200).json(updatedForm);
   } catch (error) {
-    console.error('Error updating rent:', error);
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: 'Error updating rent: ' + error.message });
   }
 };
+
 
 // Utility Function to Get Month-Year Format
 const getMonthYear = (date) => {
