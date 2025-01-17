@@ -1,5 +1,5 @@
 const express = require('express');
-const {getDuplicateForms,deleteForm,updateForm, saveForm, getAllForms } = require('../controllers/formController');
+const {restoreArchivedForm, archiveForm ,updateRentAmount, getDuplicateForms,deleteForm,updateForm, saveForm, getAllForms } = require('../controllers/formController');
 
 const router = express.Router();
 
@@ -11,4 +11,8 @@ router.get('/', getAllForms);
 router.put('/form/:id', updateForm);
 router.delete('/form/:id', deleteForm);
 router.get('/duplicateforms', getDuplicateForms);
+router.put('/form/:id/rent-amount', updateRentAmount);
+router.post('/forms/restore', restoreArchivedForm);
+
+router.post('/archive/:id', archiveForm);
 module.exports = router;

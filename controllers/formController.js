@@ -6,6 +6,7 @@ const DuplicateForm = require('../models/DuplicateForm'); // Import the Duplicat
 //   const year = date.getFullYear();
 //   return `${month}-${year}`;
 // }
+const Archive = require('../models/archiveSchema');
 
 // @desc Save form data to the database
 // @route POST /api/forms
@@ -80,6 +81,39 @@ const updateForm = async (req, res) => {
 };
 
 
+const updateRentAmount = async (req, res) => {
+  const { id } = req.params; // Form ID
+  const { rentAmount, monthYear } = req.body; // rentAmount and month-year identifier
+
+  try {
+    // Find the form by ID
+    const form = await Form.findById(id);
+    if (!form) return res.status(404).json({ message: 'Form not found' });
+
+    // Locate the rent entry for the specified month-year
+    const rentIndex = form.rents.findIndex(
+      (rent) =>
+        new Date(rent.date).toLocaleString('default', { month: 'short' }) +
+          '-' +
+          new Date(rent.date).getFullYear().toString().slice(-2) ===
+        monthYear
+    );
+
+    if (rentIndex === -1) {
+      return res.status(404).json({ message: 'Rent entry for the specified month not found' });
+    }
+
+    // Update the rentAmount
+    form.rents[rentIndex].rentAmount = Number(rentAmount);
+
+    // Save the updated form
+    const updatedForm = await form.save();
+    res.status(200).json(updatedForm);
+  } catch (error) {
+    res.status(500).json({ message: 'Error updating rent amount: ' + error.message });
+  }
+};
+
 // Utility Function to Get Month-Year Format
 const getMonthYear = (date) => {
   const d = new Date(date);
@@ -131,4 +165,63 @@ const getDuplicateForms = async (req, res) => {
   }
 };
 
-module.exports = { saveForm, getAllForms, updateForm, deleteForm ,getDuplicateForms };
+const archiveForm = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const formToArchive = await Form.findById(id);
+    if (!formToArchive) {
+      return res.status(404).json({ message: 'Form not found' });
+    }
+
+    const archive = new Archive({
+      originalFormId: formToArchive._id,
+      name: formToArchive.name,
+      roomNo: formToArchive.roomNo,
+      joiningDate: formToArchive.joiningDate,
+      depositAmount: formToArchive.depositAmount,
+      leaveDate: new Date(),
+    });
+
+    await archive.save();
+    await Form.findByIdAndDelete(id);
+
+    res.status(200).json(archive);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const restoreArchivedForm = async (req, res) => {
+  const { id } = req.body; // Use ID to identify the record to restore
+
+  try {
+    // Find the record in the archive
+    const archivedData = await Archive.findById(id);
+    if (!archivedData) {
+      return res.status(404).json({ message: 'Archived data not found' });
+    }
+
+    // Restore the record back to the original collection
+    const restoredForm = new Form({
+      srNo: archivedData.srNo,
+      name: archivedData.name,
+      roomNo: archivedData.roomNo,
+      joiningDate: archivedData.joiningDate,
+      depositAmount: archivedData.depositAmount,
+      rents: archivedData.rents, // Include rents if present
+    });
+
+    await restoredForm.save();
+
+    // Remove the record from the archive
+    await Archive.findByIdAndDelete(id);
+
+    res.status(200).json(restoredForm);
+  } catch (error) {
+    console.error('Error restoring archived data:', error.message);
+    res.status(500).json({ message: 'Error restoring archived data' });
+  }
+};
+
+
+module.exports = {restoreArchivedForm , archiveForm , saveForm, getAllForms, updateForm, deleteForm ,getDuplicateForms, updateRentAmount };
