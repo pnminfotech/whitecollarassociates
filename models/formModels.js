@@ -17,8 +17,8 @@ const formSchema = new mongoose.Schema(
     dob: { type: Date, required: true },
     rents: [
       {
-        rentAmount: { type: Number, required: true },
-        date: { type: Date, required: true },
+        rentAmount: { type: Number},
+        date: { type: Date},
       },
     ],
   },

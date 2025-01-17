@@ -15,20 +15,20 @@ const saveForm = async (req, res) => {
     // Log incoming request body to debug
     console.log('Request Body:', req.body);
 
-    const { rents, ...otherFields } = req.body;
+    // const { rents, ...otherFields } = req.body;
 
-    // Validate and process rents
-    const validatedRents = rents.map((rent) => ({
-      rentAmount: Number(rent.rentAmount), // Ensure rentAmount is a number
-      date: new Date(rent.date), // Ensure date is a valid Date object
-    }));
+    // // Validate and process rents
+    // const validatedRents = rents.map((rent) => ({
+    //   rentAmount: Number(rent.rentAmount), // Ensure rentAmount is a number
+    //   date: new Date(rent.date), // Ensure date is a valid Date object
+    // }));
 
     // Create and save form
-    const form = new Form({
-      ...otherFields,
-      rents: validatedRents,
-    });
-
+    // const form = new Form({
+    //   ...otherFields,
+    //   rents: validatedRents,
+    // });
+    const form = new Form(req.body);
     const savedForm = await form.save();
     res.status(201).json(savedForm);
   } catch (error) {
