@@ -272,4 +272,26 @@ const getArchivedForms = async (req, res) => {
   }
 };
 
-module.exports = {getArchivedForms,saveLeaveDate, restoreForm  , archiveForm , saveForm, getAllForms, updateForm, deleteForm ,getDuplicateForms, updateRentAmount };
+// Update form details
+const updateProfile = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+
+    // Find the entity by ID and update it with new data
+    const updatedForm = await Form.findByIdAndUpdate(id, updateData, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!updatedForm) {
+      return res.status(404).json({ message: "Entity not found" });
+    }
+
+    res.status(200).json(updatedForm);
+  } catch (error) {
+    res.status(500).json({ message: "Server Error", error });
+  }
+};
+
+module.exports = {updateProfile , getArchivedForms,saveLeaveDate, restoreForm  , archiveForm , saveForm, getAllForms, updateForm, deleteForm ,getDuplicateForms, updateRentAmount };
