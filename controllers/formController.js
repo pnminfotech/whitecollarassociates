@@ -236,6 +236,7 @@ const restoreForm = async (req, res) => {
       roomNo: archivedData.roomNo,
       depositAmount: archivedData.depositAmount,
       address: archivedData.address,
+      phoneNo: archivedData.phoneNo,
       relativeAddress1: archivedData.relativeAddress1,
       relativeAddress2: archivedData.relativeAddress2,
       floorNo: archivedData.floorNo,

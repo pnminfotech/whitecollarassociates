@@ -8,6 +8,7 @@ const formSchema = new mongoose.Schema(
     roomNo: { type: String, required: true },
     depositAmount: { type: Number, required: true },
     address: { type: String, required: true },
+    phoneNo : {type: Number, required : true},
     relativeAddress1: { type: String }, 
     relativeAddress2: { type: String }, 
     floorNo: { type: String, required: true },
