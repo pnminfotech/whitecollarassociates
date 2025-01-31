@@ -8,6 +8,7 @@ const archiveSchema = new mongoose.Schema(
     joiningDate: { type: Date, required: true },
     roomNo: { type: String, required: true },
     depositAmount: { type: Number, required: true },
+    phoneNo : {type: Number, required : true},
     address: { type: String, required: true },
     relativeAddress1: { type: String },
     relativeAddress2: { type: String },
