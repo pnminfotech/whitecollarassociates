@@ -80,41 +80,6 @@ const updateForm = async (req, res) => {
   }
 };
 
-
-const updateRentAmount = async (req, res) => {
-  const { id } = req.params; // Form ID
-  const { rentAmount, monthYear } = req.body; // rentAmount and month-year identifier
-
-  try {
-    // Find the form by ID
-    const form = await Form.findById(id);
-    if (!form) return res.status(404).json({ message: 'Form not found' });
-
-    // Locate the rent entry for the specified month-year
-    const rentIndex = form.rents.findIndex(
-      (rent) =>
-        new Date(rent.date).toLocaleString('default', { month: 'short' }) +
-          '-' +
-          new Date(rent.date).getFullYear().toString().slice(-2) ===
-        monthYear
-    );
-
-    if (rentIndex === -1) {
-      return res.status(404).json({ message: 'Rent entry for the specified month not found' });
-    }
-
-    // Update the rentAmount
-    form.rents[rentIndex].rentAmount = Number(rentAmount);
-
-    // Save the updated form
-    const updatedForm = await form.save();
-    res.status(200).json(updatedForm);
-  } catch (error) {
-    res.status(500).json({ message: 'Error updating rent amount: ' + error.message });
-  }
-};
-
-// Utility Function to Get Month-Year Format
 const getMonthYear = (date) => {
   const d = new Date(date);
   return `${d.toLocaleString('default', { month: 'short' })}-${d.getFullYear().toString().slice(-2)}`;
@@ -171,25 +136,57 @@ const saveLeaveDate = async (req, res) => {
   try {
     const form = await Form.findById(id);
     if (!form) {
-      return res.status(404).json({ message: 'Form not found' });
+      return res.status(404).json({ message: "Form not found" });
     }
 
     form.leaveDate = new Date(leaveDate);
     await form.save();
 
-    // Check if the leave date is today and archive immediately
-    const today = new Date().setHours(0, 0, 0, 0);
-    const leaveDateObj = new Date(leaveDate).setHours(0, 0, 0, 0);
+    res.status(200).json({ form, leaveDate: form.leaveDate });
+  } catch (error) {
+    res.status(500).json({ message: "Error saving leave date: " + error.message });
+  }
+};
 
-    if (leaveDateObj === today) {
-      const archivedData = new Archive({ ...form._doc });
-      await archivedData.save();
-      await Form.findByIdAndDelete(id);
+// Function to check and archive expired leave dates
+const checkAndArchiveLeaves = async () => {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Ensure comparison is date-only
+
+    // Find forms where leaveDate is exactly today
+    const expiredForms = await Form.find({ leaveDate: today });
+
+    for (let form of expiredForms) {
+      await archiveAndDeleteForm(form);
     }
 
-    res.status(200).json(form);
+    console.log("Checked and archived expired leave records.");
   } catch (error) {
-    res.status(500).json({ message: 'Error saving leave date: ' + error.message });
+    console.error("Error checking and archiving leaves:", error);
+  }
+};
+
+// Schedule this to run every midnight
+setInterval(checkAndArchiveLeaves, 24 * 60 * 60 * 1000); 
+
+// Function to archive and delete form
+const archiveAndDeleteForm = async (form) => {
+  const archivedData = new Archive({ ...form._doc });
+  await archivedData.save();
+  await Form.findByIdAndDelete(form._id);
+};
+
+// Schedule the archive check to run daily at midnight
+
+
+// Fetch all forms with leave dates to display them on the frontend
+const getForms = async (req, res) => {
+  try {
+    const forms = await Form.find({});
+    res.status(200).json(forms);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching forms: " + error.message });
   }
 };
 
@@ -295,4 +292,4 @@ const updateProfile = async (req, res) => {
   }
 };
 
-module.exports = {updateProfile , getArchivedForms,saveLeaveDate, restoreForm  , archiveForm , saveForm, getAllForms, updateForm, deleteForm ,getDuplicateForms, updateRentAmount };
+module.exports = { getForms, checkAndArchiveLeaves , getForms , updateProfile , getArchivedForms,saveLeaveDate, restoreForm  , archiveForm , saveForm, getAllForms, updateForm, deleteForm ,getDuplicateForms };
