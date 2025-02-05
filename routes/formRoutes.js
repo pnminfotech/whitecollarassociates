@@ -1,6 +1,6 @@
 const express = require('express');
 const {getFormById, getForms , updateProfile , getArchivedForms,saveLeaveDate,restoreForm, archiveForm ,updateRentAmount, getDuplicateForms,deleteForm,updateForm, saveForm, getAllForms } = require('../controllers/formController');
-
+const {getRent, saveRent , year} = require('../controllers/newYear');
 const router = express.Router();
 
 // Route to save form data
@@ -22,8 +22,12 @@ router.get("/forms", getForms);
 
 router.get('/forms/archived', getArchivedForms);
 // router.post('/archive/:id', archiveForm);
-
-// get / fetch single Id from the form 
-
+// get fetch single Id from the form 
 router.get('/form/:id', getFormById);
+
+//  new Schema For Year 
+router.get('/rents' , getRent);
+router.post('/rents', saveRent);
+router.get('/export/:year', year);
+
 module.exports = router;

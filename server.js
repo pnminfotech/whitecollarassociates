@@ -7,11 +7,12 @@ const connectDB = require('./config/db'); // Database connection logic
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const app = express();
+const json2xls = require('json2xls');
 app.use(express.json());
 dotenv.config();
 const authRoutes = require('./routes/authRoutes');
 const SECRET_KEY = '.pnmINFOtech.';
-
+const fs = require('fs');
 // Middleware
 app.use(cors());
 app.use(express.json());
@@ -19,6 +20,7 @@ app.use(express.json());
 // Routes
 app.use('/api', formRoutes);
 app.use('/api', authRoutes);
+
 let users = []; 
 
 const lightBillSchema = new mongoose.Schema({
@@ -88,6 +90,23 @@ app.get("/api/other-expense/all", async (req, res) => {
     res.status(200).json(data);
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch data." });
+  }
+});
+
+app.get("/api/year", async (req, res) => {
+  try {
+    const year = parseInt(req.query.year) || new Date().getFullYear();
+    
+    const startDate = new Date(`${year}-01-01`);
+    const endDate = new Date(`${year}-12-31`);
+
+    const data = await YourModel.find({
+      "rents.date": { $gte: startDate, $lte: endDate }
+    });
+
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
