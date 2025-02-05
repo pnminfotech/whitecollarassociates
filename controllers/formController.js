@@ -1,4 +1,5 @@
 const Form = require('../models/formModels');
+
 const DuplicateForm = require('../models/DuplicateForm'); // Import the DuplicateForm model
 // function getMonthYear() {
 //   const date = new Date();
@@ -292,4 +293,20 @@ const updateProfile = async (req, res) => {
   }
 };
 
-module.exports = { getForms, checkAndArchiveLeaves , getForms , updateProfile , getArchivedForms,saveLeaveDate, restoreForm  , archiveForm , saveForm, getAllForms, updateForm, deleteForm ,getDuplicateForms };
+
+const getFormById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const form = await Archive.findById(id);
+
+    if (!form) {
+      return res.status(404).json({ message: 'Form not found' });
+    }
+
+    res.json(form);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+module.exports = {getFormById , getForms, checkAndArchiveLeaves , getForms , updateProfile , getArchivedForms,saveLeaveDate, restoreForm  , archiveForm , saveForm, getAllForms, updateForm, deleteForm ,getDuplicateForms };
