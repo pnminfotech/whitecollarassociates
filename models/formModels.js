@@ -22,8 +22,7 @@ const formSchema = new mongoose.Schema(
         date: { type: Date},
       },
     ],
-  },
-  { timestamps: true }
-);
+    leaveDate: { type: String },
+  });
 
 module.exports = mongoose.model('Form', formSchema);

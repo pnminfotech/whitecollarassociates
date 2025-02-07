@@ -1,13 +1,54 @@
 const Form = require('../models/formModels');
-
-const DuplicateForm = require('../models/DuplicateForm'); // Import the DuplicateForm model
-// function getMonthYear() {
-//   const date = new Date();
-//   const month = date.getMonth() + 1; // getMonth() returns 0-11, so we add 1 to get the month number
-//   const year = date.getFullYear();
-//   return `${month}-${year}`;
-// }
 const Archive = require('../models/archiveSchema');
+const DuplicateForm = require('../models/DuplicateForm'); // Import the DuplicateForm model
+const cron = require("node-cron");
+
+
+const processLeave = async (req, res) => {
+  try {
+    const { formId, leaveDate } = req.body;
+    const form = await Form.findById(formId);
+
+    if (!form) return res.status(404).json({ error: "Form not found" });
+
+    const currentDate = new Date().toISOString().split("T")[0];
+
+    if (leaveDate <= currentDate) {
+      // If the leave date is past or current, move the record to archive
+      const archivedData = new Archive({ ...form.toObject(), leaveDate });
+      await archivedData.save();
+      await Form.findByIdAndDelete(formId);
+
+      return res.status(200).json({ message: "Record archived successfully." });
+    } else {
+      // If leave date is in the future, update the form record
+      form.leaveDate = leaveDate;
+      await form.save();
+      return res.status(200).json({ message: "Leave date saved. It will be archived on the leave date." });
+    }
+  } catch (error) {
+    console.error("Error processing leave:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+// CRON JOB to check for leave dates every day at midnight
+cron.schedule("0 0 * * *", async () => {
+  try {
+    const today = new Date().toISOString().split("T")[0];
+    const formsToArchive = await Form.find({ leaveDate: today });
+
+    for (const form of formsToArchive) {
+      const archivedData = new Archive({ ...form.toObject(), leaveDate: today });
+      await archivedData.save();
+      await Form.findByIdAndDelete(form._id);
+    }
+
+    console.log(`Archived ${formsToArchive.length} records for ${today}`);
+  } catch (error) {
+    console.error("Error archiving records:", error);
+  }
+});
 
 // @desc Save form data to the database
 // @route POST /api/forms
@@ -57,6 +98,13 @@ const getAllForms = async (req, res) => {
 // @desc Update rent for a specific form
 // @route PUT /api/forms/:id
 // @access Public
+
+const getMonthYear = (date) => {
+  const d = new Date(date);
+  return `${d.toLocaleString('default', { month: 'short' })}-${d.getFullYear().toString().slice(-2)}`;
+};
+
+
 const updateForm = async (req, res) => {
   const { id } = req.params;
   const { rentAmount, date } = req.body;
@@ -80,13 +128,6 @@ const updateForm = async (req, res) => {
     res.status(500).json({ message: 'Error updating rent: ' + error.message });
   }
 };
-
-const getMonthYear = (date) => {
-  const d = new Date(date);
-  return `${d.toLocaleString('default', { month: 'short' })}-${d.getFullYear().toString().slice(-2)}`;
-};
-
-
 
 
 // @desc Delete a form and move its data to the DuplicateForm model
@@ -309,4 +350,4 @@ const getFormById = async (req, res) => {
   }
 };
 
-module.exports = {getFormById , getForms, checkAndArchiveLeaves , getForms , updateProfile , getArchivedForms,saveLeaveDate, restoreForm  , archiveForm , saveForm, getAllForms, updateForm, deleteForm ,getDuplicateForms };
+module.exports = {processLeave , getFormById , getForms, checkAndArchiveLeaves, updateProfile , getArchivedForms,saveLeaveDate, restoreForm  , archiveForm , saveForm, getAllForms, updateForm, deleteForm ,getDuplicateForms };

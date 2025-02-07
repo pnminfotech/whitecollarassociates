@@ -23,9 +23,7 @@ const archiveSchema = new mongoose.Schema(
         date: { type: Date },
       },
     ],
-    leaveDate: { type: Date },
-  },
-  { timestamps: true }
-);
+    leaveDate: { type: String , required: true },
+  });
 
 module.exports = mongoose.model('Archive', archiveSchema);
