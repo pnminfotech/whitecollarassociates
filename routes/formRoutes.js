@@ -1,5 +1,5 @@
 const express = require('express');
-const {processLeave ,getFormById, getForms , updateProfile , getArchivedForms,saveLeaveDate,restoreForm, archiveForm , getDuplicateForms,deleteForm,updateForm, saveForm, getAllForms } = require('../controllers/formController');
+const {rentAmountDel , processLeave ,getFormById, getForms , updateProfile , getArchivedForms,saveLeaveDate,restoreForm, archiveForm , getDuplicateForms,deleteForm,updateForm, saveForm, getAllForms } = require('../controllers/formController');
 const router = express.Router();
 
 // Route to save form data
@@ -7,7 +7,7 @@ router.post('/forms', saveForm);
 
 // Route to get all form data
 router.get('/', getAllForms);
-router.put('/form/:id', updateForm);
+
 router.delete('/form/:id', deleteForm);
 router.get('/duplicateforms', getDuplicateForms);
 
@@ -21,13 +21,10 @@ router.get("/forms", getForms);
 router.post("/leave", processLeave);
 
 router.get('/forms/archived', getArchivedForms);
-// router.post('/archive/:id', archiveForm);
-// get fetch single Id from the form 
 router.get('/form/:id', getFormById);
 
-// //  new Schema For Year 
-// router.get('/rents' , getRent);
-// router.post('/rents', saveRent);
-// router.get('/export/:year', year);
+//for rentAmount updation Logic 0 
+router.delete("/form/:formId/rent/:monthYear", rentAmountDel);
+router.put('/form/:id', updateForm);
 
 module.exports = router;

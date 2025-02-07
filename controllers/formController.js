@@ -111,7 +111,7 @@ const updateForm = async (req, res) => {
 
   try {
     const form = await Form.findById(id);
-    if (!form) return res.status(404).json({ message: 'Form not found' });
+    if (!form) return res.status(404).json({ message: "Form not found" });
 
     const monthYear = getMonthYear(date);
     const rentIndex = form.rents.findIndex((rent) => getMonthYear(rent.date) === monthYear);
@@ -123,12 +123,11 @@ const updateForm = async (req, res) => {
     }
 
     const updatedForm = await form.save();
-    res.status(200).json(updatedForm);
+    res.status(200).json(updatedForm); // Return updated form data
   } catch (error) {
-    res.status(500).json({ message: 'Error updating rent: ' + error.message });
+    res.status(500).json({ message: "Error updating rent: " + error.message });
   }
 };
-
 
 // @desc Delete a form and move its data to the DuplicateForm model
 // @route DELETE /api/forms/:id
@@ -350,4 +349,23 @@ const getFormById = async (req, res) => {
   }
 };
 
-module.exports = {processLeave , getFormById , getForms, checkAndArchiveLeaves, updateProfile , getArchivedForms,saveLeaveDate, restoreForm  , archiveForm , saveForm, getAllForms, updateForm, deleteForm ,getDuplicateForms };
+//for rentAmount updation Logic 0 
+
+const rentAmountDel = async (req, res) => {
+  const { formId, monthYear } = req.params;
+
+  try {
+    const form = await Form.findById(formId);
+    if (!form) return res.status(404).json({ message: "Form not found" });
+
+    // Remove rent entry for the specified month
+    form.rents = form.rents.filter((rent) => getMonthYear(rent.date) !== monthYear);
+    await form.save();
+
+    res.status(200).json({ message: "Rent entry removed successfully", form });
+  } catch (error) {
+    console.error("Error removing rent entry:", error);
+    res.status(500).json({ message: "Failed to remove rent", error });
+  }
+};
+module.exports = {rentAmountDel , processLeave , getFormById , getForms, checkAndArchiveLeaves, updateProfile , getArchivedForms,saveLeaveDate, restoreForm  , archiveForm , saveForm, getAllForms, updateForm, deleteForm ,getDuplicateForms };
