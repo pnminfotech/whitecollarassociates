@@ -53,30 +53,35 @@ cron.schedule("0 0 * * *", async () => {
 // @desc Save form data to the database
 // @route POST /api/forms
 // @access Public
+
+const getNextSrNo = async (req, res) => {
+  try {
+    const activeCount = await Form.countDocuments();
+    const archivedCount = await Archive.countDocuments();
+    const nextSrNo = (activeCount + archivedCount + 1).toString();
+
+    res.status(200).json({ nextSrNo });
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching Sr. No.', error });
+  }
+};
+
 const saveForm = async (req, res) => {
   try {
-    // Log incoming request body to debug
-    console.log('Request Body:', req.body);
+    // Count total records from both collections
+    const activeCount = await Form.countDocuments();
+    const archivedCount = await Archive.countDocuments();
+    const totalCount = activeCount + archivedCount + 1; // New Sr No.
 
-    // const { rents, ...otherFields } = req.body;
+    // Assign srNo automatically
+    req.body.srNo = totalCount.toString(); 
 
-    // // Validate and process rents
-    // const validatedRents = rents.map((rent) => ({
-    //   rentAmount: Number(rent.rentAmount), // Ensure rentAmount is a number
-    //   date: new Date(rent.date), // Ensure date is a valid Date object
-    // }));
-
-    // Create and save form
-    // const form = new Form({
-    //   ...otherFields,
-    //   rents: validatedRents,
-    // });
-    const form = new Form(req.body);
-    const savedForm = await form.save();
-    res.status(201).json(savedForm);
+    const newForm = new Form(req.body);
+    await newForm.save();
+    
+    res.status(201).json({ message: 'Form submitted successfully', form: newForm });
   } catch (error) {
-    console.error('Error saving form:', error);
-    res.status(400).json({ message: error.message });
+    res.status(500).json({ message: 'Error submitting form', error });
   }
 };
 
@@ -368,4 +373,4 @@ const rentAmountDel = async (req, res) => {
     res.status(500).json({ message: "Failed to remove rent", error });
   }
 };
-module.exports = {rentAmountDel , processLeave , getFormById , getForms, checkAndArchiveLeaves, updateProfile , getArchivedForms,saveLeaveDate, restoreForm  , archiveForm , saveForm, getAllForms, updateForm, deleteForm ,getDuplicateForms };
+module.exports = { getNextSrNo, rentAmountDel , processLeave , getFormById , getForms, checkAndArchiveLeaves, updateProfile , getArchivedForms,saveLeaveDate, restoreForm  , archiveForm , saveForm, getAllForms, updateForm, deleteForm ,getDuplicateForms };

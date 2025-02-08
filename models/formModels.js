@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const formSchema = new mongoose.Schema(
   {
-    srNo: { type: String, required: true },
+    srNo: { type: String, required: true, unique: true },
     name: { type: String, required: true },
     joiningDate: { type: Date, required: true },
     roomNo: { type: String, required: true },
