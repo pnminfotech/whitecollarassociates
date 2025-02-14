@@ -27,6 +27,21 @@ const registerUser = async (req, res) => {
   };
   
   
+  const getUserNAme = async (req, res)=>{
+    try  {
+      const token = req.headers.authorization?.split(" ")[1];
+      if (!token) return res.status(401).json({ message: "Unauthorized" });
+
+      const decoded = jwt.verify(token, SECRET_KEY);
+      const user = await User.findById(decoded.userId);
+      if (!user) return res.status(404).json({ message: "User not found" });
+
+      res.json({ username: user.username });
+  } catch (error) {
+      res.status(500).json({ message: "Server error" });
+  }
+  }
+
 // Login user
 const loginUser = async (req, res) => {
     const { email, password } = req.body;
@@ -56,4 +71,4 @@ const getUserProfile = async (req, res) => {
   }
 };
 
-module.exports = { registerUser, loginUser, getUserProfile };
+module.exports = { getUserNAme , registerUser, loginUser, getUserProfile };

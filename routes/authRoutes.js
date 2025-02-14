@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { registerUser, loginUser, getUserProfile } = require('../controllers/authController');
+const {getUserNAme,  registerUser, loginUser, getUserProfile } = require('../controllers/authController');
 const jwt = require('jsonwebtoken');
 
 const SECRET_KEY = 'your-secret-key';
@@ -19,6 +19,7 @@ const authenticateToken = (req, res, next) => {
 
 router.post('/register', registerUser);
 router.post('/login', loginUser);
+router.get('/user', getUserNAme);
 router.get('/profile', authenticateToken, getUserProfile);
 
 module.exports = router;

@@ -1,5 +1,6 @@
 const express = require('express');
-const { getNextSrNo, rentAmountDel , processLeave ,getFormById, getForms , updateProfile , getArchivedForms,saveLeaveDate,restoreForm, archiveForm , getDuplicateForms,deleteForm,updateForm, saveForm, getAllForms } = require('../controllers/formController');
+const { getNextSrNo, rentAmountDel , processLeave ,getFormById, getForms , updateProfile , getArchivedForms,saveLeaveDate,
+restoreForm, archiveForm , getDuplicateForms,deleteForm,updateForm, saveForm, getAllForms } = require('../controllers/formController');
 const router = express.Router();
 
 // Route to save form data
