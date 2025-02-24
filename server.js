@@ -4,7 +4,8 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const formRoutes = require('./routes/formRoutes'); // Routes
 const maintenanceRoutes = require('./routes/MaintRoutes');
-
+const supplierRoutes = require('./routes/supplierRoutes');
+const ProjectRoutes = require('./routes/Project')
 
 const connectDB = require('./config/db'); // Database connection logic
 const jwt = require('jsonwebtoken');
@@ -25,6 +26,8 @@ app.use('/api', formRoutes);
 app.use('/api', authRoutes);
 
 app.use("/api/maintenance", maintenanceRoutes);
+app.use("/api/suppliers", supplierRoutes);
+app.use("/api", ProjectRoutes)
 
 
 const authenticateToken = (req, res, next) => {

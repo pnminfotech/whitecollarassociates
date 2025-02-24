@@ -9,7 +9,12 @@ const khataBookDB = mongoose.createConnection(process.env.MONGO_URI, {
   useUnifiedTopology: true,
 });
 
-khataBookDB.on("connected", () => console.log("✅ Connected to khataBook Database"));
-khataBookDB.on("error", (err) => console.error("❌ khataBook Database Error:", err));
+khataBookDB.on("connected", () =>
+  console.log("✅ Connected to khataBook Database")
+);
+khataBookDB.on("error", (err) =>
+  console.error("❌ khataBook Database Error:", err)
+);
 
-module.exports = khataBookDB;
+
+module.exports = { khataBookDB };

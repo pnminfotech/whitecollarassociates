@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const khataBookDB = require("../config/khataDB"); 
+const { khataBookDB } = require("../config/khataDB");
 const Maintenance = khataBookDB.model("Maintainance", require("../models/Maintainance"));
 // Create a new schema
 router.post("/create", async (req, res) => {
