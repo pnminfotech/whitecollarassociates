@@ -1,13 +1,13 @@
 const mongoose = require('mongoose');
+const { suppliersDB } = require("../config/mainte"); 
 
 const PaymentSchema = new mongoose.Schema({
-  amount: Number,
+  amount: { type: Number, required: true },
   date: { type: Date, default: Date.now },
   description: { type: String, required: true },
 });
 
 const EmployeeSchema = new mongoose.Schema({
-  
   name: { type: String, required: true },
   phoneNo: { type: String, required: true },
   roleOrMaterial: { type: String, required: true }, // Role for employees, Material for suppliers
@@ -15,12 +15,16 @@ const EmployeeSchema = new mongoose.Schema({
   payments: { type: [PaymentSchema], default: [] },
 });
 
-const SupplierSchema = new mongoose.Schema({
+const MaterialSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  payments: { type: [PaymentSchema], default: [] },
+});
+
+const ProjectSupplierSchema = new mongoose.Schema({
   supplierId: { type: mongoose.Schema.Types.ObjectId, ref: "Supplier" },  
   name: { type: String, required: true },
   phoneNo: { type: String, required: true },
-  totalPayment: { type: Number, required: true },
-  payments: { type: [PaymentSchema], default: [] },
+  materials: { type: [MaterialSchema], default: [] }, // Each supplier can have multiple materials inside the project
 });
 
 const ProjectSchema = new mongoose.Schema({
@@ -28,10 +32,11 @@ const ProjectSchema = new mongoose.Schema({
   date: { type: Date, default: Date.now },
   description: String,
   employees: [EmployeeSchema],
-  suppliers: [{ type: mongoose.Schema.Types.ObjectId, ref: "Supplier" }],
+  suppliers: { type: [ProjectSupplierSchema], default: [] }, 
 });
 
-module.exports = ProjectSchema;
+const Project = suppliersDB.model("Project", ProjectSchema);
+module.exports = Project;
 
 
 

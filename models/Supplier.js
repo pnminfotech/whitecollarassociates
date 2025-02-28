@@ -1,4 +1,6 @@
 const mongoose = require('mongoose');
+const { suppliersDB } = require("../config/mainte"); 
+
 const PaymentSchema = new mongoose.Schema({
      amount :{ type: Number, required: true},
      description : {type:String, require: true},
@@ -17,11 +19,12 @@ const PaymentSchema = new mongoose.Schema({
     materials: { type: [MaterialSchema], default: [] }, // Now stores multiple materials
     projects: [{ type: mongoose.Schema.Types.ObjectId, ref: "Project" }],
   });
+
   SupplierSchema.virtual("remainingBalance").get(function () {
-    let totalGiven = 0;
-    this.materials.forEach((material) => {
-      totalGiven += material.payments.reduce((acc, payment) => acc + payment.amount, 0);
-    });
-    return totalGiven; // Total payments across all materials
+    return this.materials.reduce((total, material) => {
+      return total + material.payments.reduce((sum, payment) => sum + payment.amount, 0);
+    }, 0);
   });
-  module.exports = SupplierSchema;
+
+  const Supplier = suppliersDB.model("Supplier", SupplierSchema);
+  module.exports = Supplier;

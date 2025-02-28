@@ -1,11 +1,12 @@
 const express = require("express");
 const router = express.Router();
 const mongoose = require("mongoose");
-const { suppliersDB } = require("../config/mainte"); // Import the connection
-const SupplierSchema = require("../models/Supplier");
-const Supplier = suppliersDB.model("Supplier", SupplierSchema);
-
-
+// const { suppliersDB } = require("../config/mainte"); // Import the connection
+// const SupplierSchema = require("../models/Supplier");
+// const Supplier = suppliersDB.model("Supplier", SupplierSchema);
+const Supplier = require("../models/Supplier");
+const Project = require("../models/Project");
+//to fetch the supplier.
 router.get("/", async (req, res) => {
   try {
     const suppliers = await Supplier.find();
@@ -15,7 +16,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-
+//to Post the supplier.
 router.post("/", async (req, res) => {
   try {
     const { name, phoneNo, address, materials, totalPayment  } = req.body;
@@ -47,54 +48,8 @@ router.get("/suppliers/:supplierId", async (req, res) => {
   }
 });
 
-// Add a material to a supplier
-router.post("/:supplierId/materials", async (req, res) => {
-  try {
-    const { name, amount, description } = req.body;
-    const supplier = await Supplier.findById(req.params.supplierId);
 
-    if (!supplier) return res.status(404).json({ message: "Supplier not found" });
-
-    let material = supplier.materials.find(m => m.name === name);
-
-    if (!material) {
-      material = { name, payments: [{ amount, description, date: new Date() }] };
-      supplier.materials.push(material);
-    } else {
-      material.payments.push({ amount, description, date: new Date() });
-    }
-
-    await supplier.save();
-    res.status(201).json(supplier);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-router.patch("/:id", async (req, res) => {
-  try {
-    const { materials } = req.body; // Expecting material array
-
-    const supplier = await Supplier.findById(req.params.id);
-    if (!supplier) return res.status(404).json({ message: "Supplier not found" });
-
-    // Append new materials & payments
-    materials.forEach(material => {
-      const existingMaterial = supplier.materials.find(m => m.name === material.name);
-      if (existingMaterial) {
-        existingMaterial.payments.push(...material.payments);
-      } else {
-        supplier.materials.push(material);
-      }
-    });
-
-    await supplier.save();
-    res.status(200).json(supplier);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-// Add payment to supplier
+// Add payment array to the supplier
 router.post("/:supplierId/materials/:materialName/payment", async (req, res) => {
   try {
     const { amount, description } = req.body;
@@ -113,38 +68,44 @@ router.post("/:supplierId/materials/:materialName/payment", async (req, res) => 
   }
 });
 
-router.put("/:supplierId/materials/:materialName/payments", async (req, res) => {
+router.post("/projects/:projectId/suppliers", async (req, res) => {
   try {
-    const { amount, description } = req.body;
-    const supplier = await Supplier.findById(req.params.supplierId);
-    if (!supplier) return res.status(404).json({ message: "Supplier not found" });
+    const { projectId } = req.params;
+    const { supplierId, materials } = req.body;
 
-    const material = supplier.materials.find(m => m.name === req.params.materialName);
-    if (!material) return res.status(404).json({ message: "Material not found" });
+    console.log("Supplier ID received:", supplierId);
 
-    material.payments.push({ amount, description, date: new Date() });
+    // Fetch project
+    const project = await Project.findById(projectId);
+    if (!project) {
+      return res.status(404).json({ message: "Project not found" });
+    }
 
-    await supplier.save();
-    res.json(supplier);
-  } catch (err) {
-    res.status(400).json({ message: err.message });
+    // Fetch supplier from the same database
+    const supplier = await Supplier.findById(supplierId);
+    if (!supplier) {
+      console.log("Supplier not found in DB:", supplierId);
+      return res.status(404).json({ message: "Supplier not found in database" });
+    }
+
+    // Construct supplier object
+    const supplierData = {
+      supplierId: supplier._id,
+      name: supplier.name,
+      phoneNo: supplier.phoneNo,
+      materials: materials || [],
+    };
+
+    // Add supplier to the project's supplier list
+    project.suppliers.push(supplierData);
+    await project.save();
+
+    res.status(201).json({ message: "Supplier added to project", project });
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).json({ message: "Error adding supplier", error });
   }
 });
 
-router.post("/", async (req, res)=>{
-   try {
-        const { name, phoneNo, roleOrMaterial, salaryOrTotalPayment} = req.body;
-        const project = await project.findById(req.params.id);
-        if (!project) return res.status(404).json({ message: "Project not found" });
-
-        const newEmployee = { name, phoneNo, roleOrMaterial, salaryOrTotalPayment, payments: [] };
-        project.employees.push(newEmployee);
-        await project.save();
-
-        res.status(201).json(project);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-})
 
 module.exports = router;

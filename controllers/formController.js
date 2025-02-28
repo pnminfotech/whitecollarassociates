@@ -271,25 +271,10 @@ const restoreForm = async (req, res) => {
       return res.status(404).json({ message: 'Archived data not found' });
     }
 
-    // Create a new form document using archived data
-    const restoredForm = new Form({
-      srNo: archivedData.srNo,
-      name: archivedData.name,
-      joiningDate: archivedData.joiningDate,
-      roomNo: archivedData.roomNo,
-      depositAmount: archivedData.depositAmount,
-      address: archivedData.address,
-      phoneNo: archivedData.phoneNo,
-      relativeAddress1: archivedData.relativeAddress1,
-      relativeAddress2: archivedData.relativeAddress2,
-      floorNo: archivedData.floorNo,
-      bedNo: archivedData.bedNo,
-      companyAddress: archivedData.companyAddress,
-      dateOfJoiningCollege: archivedData.dateOfJoiningCollege,
-      dob: archivedData.dob,
-      rents: archivedData.rents,
-      leaveDate: archivedData.leaveDate,
-    });
+    // Create a new form document using archived data (excluding leaveDate)
+    const { leaveDate, ...restoredData } = archivedData.toObject();
+
+    const restoredForm = new Form(restoredData);
 
     // Save the restored form data
     await restoredForm.save();
@@ -305,6 +290,7 @@ const restoreForm = async (req, res) => {
     res.status(500).json({ message: 'Error restoring archived data' });
   }
 };
+
 
 
 const getArchivedForms = async (req, res) => {
