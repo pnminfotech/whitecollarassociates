@@ -17,7 +17,11 @@ const PaymentSchema = new mongoose.Schema({
     phoneNo: { type: String, required: true },
     address: { type: String, required: true },
     materials: { type: [MaterialSchema], default: [] }, // Now stores multiple materials
-    projects: [{ type: mongoose.Schema.Types.ObjectId, ref: "Project" }],
+    projects: [{  projectId: mongoose.Schema.Types.ObjectId,
+      projectName: String,
+      materials: [MaterialSchema]
+    }
+    ]
   });
 
   SupplierSchema.virtual("remainingBalance").get(function () {

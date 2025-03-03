@@ -6,6 +6,7 @@ const mongoose = require("mongoose");
 // const Supplier = suppliersDB.model("Supplier", SupplierSchema);
 const Supplier = require("../models/Supplier");
 const Project = require("../models/Project");
+
 //to fetch the supplier.
 router.get("/", async (req, res) => {
   try {
@@ -75,32 +76,75 @@ router.post("/projects/:projectId/suppliers", async (req, res) => {
 
     console.log("Supplier ID received:", supplierId);
 
-    // Fetch project
-    const project = await Project.findById(projectId);
-    if (!project) {
-      return res.status(404).json({ message: "Project not found" });
+    // Validate ObjectId
+    if (!mongoose.Types.ObjectId.isValid(supplierId) || !mongoose.Types.ObjectId.isValid(projectId)) {
+      return res.status(400).json({ message: "Invalid ID format" });
     }
 
-    // Fetch supplier from the same database
+    // Fetch supplier
     const supplier = await Supplier.findById(supplierId);
     if (!supplier) {
       console.log("Supplier not found in DB:", supplierId);
       return res.status(404).json({ message: "Supplier not found in database" });
     }
 
-    // Construct supplier object
-    const supplierData = {
-      supplierId: supplier._id,
-      name: supplier.name,
-      phoneNo: supplier.phoneNo,
-      materials: materials || [],
-    };
+    // Fetch project
+    const project = await Project.findById(projectId);
+    if (!project) {
+      return res.status(404).json({ message: "Project not found" });
+    }
 
-    // Add supplier to the project's supplier list
-    project.suppliers.push(supplierData);
+    // Check if supplier is already in the project
+    let existingSupplier = project.suppliers.find(sup => sup.supplierId.equals(supplierId));
+
+    if (existingSupplier) {
+      // Supplier exists, only update materials
+      materials.forEach(material => {
+        let existingMaterial = existingSupplier.materials.find(m => m.name === material.name);
+        if (existingMaterial) {
+          // Merge payments if material exists
+          existingMaterial.payments.push(...material.payments);
+        } else {
+          // Add new material if not found
+          existingSupplier.materials.push(material);
+        }
+      });
+    } else {
+      // Supplier not in project, add supplier + materials
+      project.suppliers.push({
+        supplierId: supplier._id,
+        name: supplier.name,
+        phoneNo: supplier.phoneNo,
+        materials: materials
+      });
+    }
+
+    // Save project
     await project.save();
 
-    res.status(201).json({ message: "Supplier added to project", project });
+    // ✅ Update supplier's schema with the projectId and materials
+    let existingProject = supplier.projects.find(p => p.projectId.equals(projectId));
+
+    if (existingProject) {
+      // Merge materials if project exists
+      materials.forEach(material => {
+        let existingMaterial = existingProject.materials.find(m => m.name === material.name);
+        if (existingMaterial) {
+          existingMaterial.payments.push(...material.payments);
+        } else {
+          existingProject.materials.push(material);
+        }
+      });
+    } else {
+      // Add new project with materials
+      supplier.projects.push({ projectId, materials });
+    }
+
+    // Save supplier
+    await supplier.save();
+
+    res.status(201).json({ message: "Supplier added/updated in project and supplier schema", project, supplier });
+
   } catch (error) {
     console.error("Error:", error);
     res.status(500).json({ message: "Error adding supplier", error });

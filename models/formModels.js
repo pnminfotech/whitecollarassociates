@@ -20,6 +20,7 @@ const formSchema = new mongoose.Schema(
       {
         rentAmount: { type: Number},
         date: { type: Date},
+        month: {type :String},
       },
     ],
     leaveDate: { type: String },

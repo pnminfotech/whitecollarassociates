@@ -81,43 +81,75 @@ router.post("/projects/:projectId/employees/:employeeId/payments", async (req, r
 });
 
 //to add supplier to the project 
-router.post("/projects/:projectId/suppliers",  async (req, res) => {
+router.post("/projects/:projectId/suppliers", async (req, res) => {
   try {
     const { projectId } = req.params;
-    const { supplierId, materials } = req.body;
+    const { supplierId, materials, payment } = req.body;
 
     console.log("Supplier ID received:", supplierId);
 
-    // Fetch project from main DB
+    // Validate projectId and supplierId
+    if (!mongoose.Types.ObjectId.isValid(projectId) || !mongoose.Types.ObjectId.isValid(supplierId)) {
+      return res.status(400).json({ message: "Invalid Project ID or Supplier ID format" });
+    }
+
+    // Fetch supplier
+    const supplier = await Supplier.findById(supplierId);
+    if (!supplier) {
+      console.log("Supplier not found in DB:", supplierId);
+      return res.status(404).json({ message: "Supplier not found in database" });
+    }
+
+    // Fetch project
     const project = await Project.findById(projectId);
     if (!project) {
       return res.status(404).json({ message: "Project not found" });
     }
 
-    // Fetch supplier from the Suppliers DB
-    const supplier = await Supplier.findById(supplierId);
-    if (!supplier) {
-      return res.status(404).json({ message: "Supplier not found in database" });
+    // Check if supplier already exists in the project
+    let existingSupplier = project.suppliers.find(s => s.supplierId.toString() === supplierId);
+
+    if (existingSupplier) {
+      // Update existing supplier's materials and payments in project
+      existingSupplier.materials = [...existingSupplier.materials, ...(materials || [])];
+      existingSupplier.payment = (existingSupplier.payment || 0) + (payment || 0);
+    } else {
+      // Add supplier to project
+      project.suppliers.push({
+        supplierId: supplier._id,
+        name: supplier.name,
+        phoneNo: supplier.phoneNo,
+        materials: materials || [],
+        payment: payment || 0,
+      });
     }
 
-    // Construct supplier object with fetched data
-    const supplierData = {
-      supplierId: supplier._id,
-      name: supplier.name,
-      phoneNo: supplier.phoneNo,
-      materials: materials || [],
-    };
+    // Add project reference to supplier
+    let existingProject = supplier.projects.find(p => p.projectId.toString() === projectId);
+    if (existingProject) {
+      existingProject.materials = [...existingProject.materials, ...(materials || [])];
+      existingProject.payment = (existingProject.payment || 0) + (payment || 0);
+    } else {
+      supplier.projects.push({
+        projectId: project._id,
+        projectName: project.name,
+        materials: materials || [],
+        payment: payment || 0,
+      });
+    }
 
-    // Push supplier data into project suppliers array
-    project.suppliers.push(supplierData);
-
+    // Save changes
     await project.save();
-    res.status(201).json({ message: "Supplier added to project", project });
+    await supplier.save();
+
+    res.status(201).json({ message: "Supplier updated in project and supplier record", project, supplier });
+
   } catch (error) {
     console.error("Error:", error);
     res.status(500).json({ message: "Error adding supplier", error });
   }
 });
+
 
 //fetch all the supplier which are added into the project.
 router.get("/projects/:projectId/suppliers", async (req, res) => {
@@ -128,6 +160,70 @@ router.get("/projects/:projectId/suppliers", async (req, res) => {
     res.status(500).json({ message: "Error fetching suppliers", error });
   }
 });
+
+
+
+// Add a payment to a material in a supplier inside a project
+// router.post("/projects/:projectId/suppliers/:supplierId/materials/:materialId/payments", async (req, res) => {
+//   try {
+//     const { projectId, supplierId, materialId } = req.params;
+//     const { amount, description } = req.body;
+
+//     if (!amount || !description) {
+//       return res.status(400).json({ message: "Amount and description are required" });
+//     }
+
+//     // Find the project
+//     const project = await Project.findById(projectId);
+//     if (!project) {
+//       return res.status(404).json({ message: "Project not found" });
+//     }
+
+//     // Find the supplier inside the project
+//     const supplier = project.suppliers.find(s => s.supplierId.toString() === supplierId);
+//     if (!supplier) {
+//       return res.status(404).json({ message: "Supplier not found in project" });
+//     }
+
+//     // Find the material inside the supplier
+//     const material = supplier.materials.find(m => m._id.toString() === materialId);
+//     if (!material) {
+//       return res.status(404).json({ message: "Material not found in supplier" });
+//     }
+
+//     // Add the payment to the material's payments array
+//     const newPayment = {
+//       amount: parseFloat(amount),
+//       description,
+//       date: new Date(),
+//     };
+//     material.payments.push(newPayment);
+
+//     // Save the updated project
+//     await project.save();
+
+//     res.status(200).json({ message: "Payment added successfully", project });
+//   } catch (error) {
+//     console.error("Error adding payment:", error);
+//     res.status(500).json({ message: "Internal Server Error" });
+//   }
+// });
+
+
+//for putting the supplier into project.
+// router.post("/projects/:projectId/suppliers/:supplierId", async (req, res) => {
+//   try {
+//       const projectId = req.params.projectId;
+//       if (!mongoose.Types.ObjectId.isValid(projectId)) {
+//           return res.status(400).json({ error: "Invalid project ID" });
+//       }
+//       // Proceed with the database operation
+//   } catch (error) {
+//       res.status(500).json({ error: error.message });
+//   }
+// });
+
+
 
 module.exports = router;
 //router.post("/", async (req, res) => {

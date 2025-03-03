@@ -112,27 +112,29 @@ const getMonthYear = (date) => {
 
 const updateForm = async (req, res) => {
   const { id } = req.params;
-  const { rentAmount, date } = req.body;
+  const { rentAmount, date, month } = req.body; // Now taking both date and month
 
   try {
     const form = await Form.findById(id);
     if (!form) return res.status(404).json({ message: "Form not found" });
 
-    const monthYear = getMonthYear(date);
-    const rentIndex = form.rents.findIndex((rent) => getMonthYear(rent.date) === monthYear);
+    const rentIndex = form.rents.findIndex((rent) => rent.month === month);
 
     if (rentIndex !== -1) {
-      form.rents[rentIndex] = { rentAmount: Number(rentAmount), date: new Date(date) };
+      // Update existing rent entry
+      form.rents[rentIndex] = { rentAmount: Number(rentAmount), date: new Date(date), month };
     } else {
-      form.rents.push({ rentAmount: Number(rentAmount), date: new Date(date) });
+      // Add a new entry
+      form.rents.push({ rentAmount: Number(rentAmount), date: new Date(date), month });
     }
 
     const updatedForm = await form.save();
-    res.status(200).json(updatedForm); // Return updated form data
+    res.status(200).json(updatedForm);
   } catch (error) {
     res.status(500).json({ message: "Error updating rent: " + error.message });
   }
 };
+
 
 // @desc Delete a form and move its data to the DuplicateForm model
 // @route DELETE /api/forms/:id
@@ -343,14 +345,14 @@ const getFormById = async (req, res) => {
 //for rentAmount updation Logic 0 
 
 const rentAmountDel = async (req, res) => {
-  const { formId, monthYear } = req.params;
+  const { formId, month } = req.params;
 
   try {
     const form = await Form.findById(formId);
     if (!form) return res.status(404).json({ message: "Form not found" });
 
     // Remove rent entry for the specified month
-    form.rents = form.rents.filter((rent) => getMonthYear(rent.date) !== monthYear);
+    form.rents = form.rents.filter((rent) => rent.month !== month);
     await form.save();
 
     res.status(200).json({ message: "Rent entry removed successfully", form });
@@ -359,4 +361,5 @@ const rentAmountDel = async (req, res) => {
     res.status(500).json({ message: "Failed to remove rent", error });
   }
 };
+
 module.exports = { getNextSrNo, rentAmountDel , processLeave , getFormById , getForms, checkAndArchiveLeaves, updateProfile , getArchivedForms,saveLeaveDate, restoreForm  , archiveForm , saveForm, getAllForms, updateForm, deleteForm ,getDuplicateForms };

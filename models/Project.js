@@ -32,7 +32,14 @@ const ProjectSchema = new mongoose.Schema({
   date: { type: Date, default: Date.now },
   description: String,
   employees: [EmployeeSchema],
-  suppliers: { type: [ProjectSupplierSchema], default: [] }, 
+  suppliers:  [
+    {
+      supplierId: mongoose.Schema.Types.ObjectId,
+      name: String,
+      phoneNo: String,
+      materials: [MaterialSchema]
+    }
+  ]
 });
 
 const Project = suppliersDB.model("Project", ProjectSchema);
