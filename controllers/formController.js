@@ -345,14 +345,14 @@ const getFormById = async (req, res) => {
 //for rentAmount updation Logic 0 
 
 const rentAmountDel = async (req, res) => {
-  const { formId, month } = req.params;
+  const { formId, monthYear } = req.params; // Use monthYear instead of month
 
   try {
     const form = await Form.findById(formId);
     if (!form) return res.status(404).json({ message: "Form not found" });
 
-    // Remove rent entry for the specified month
-    form.rents = form.rents.filter((rent) => rent.month !== month);
+    // Filter out the rent entry for the specified month
+    form.rents = form.rents.filter((rent) => rent.month !== monthYear);
     await form.save();
 
     res.status(200).json({ message: "Rent entry removed successfully", form });
