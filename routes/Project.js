@@ -1,23 +1,47 @@
 const express = require("express");
 const router = express.Router();
-// const { suppliersDB } = require("../config/mainte");
-// const ProjectSchema = require("../models/Project"); // Import the model directly
-// const SupplierSchema = require("../models/Supplier");
+const path = require("path");
 const mongoose = require("mongoose");
 // Models
+// https://chatgpt.com/c/67c7fff1-a5a4-8000-a37d-5619da480851
 const Project = require("../models/Project");
 const Supplier = require("../models/Supplier");
+const multer = require("multer"); // Import multer
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "uploads/"); // Ensure 'uploads' directory exists
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + path.extname(file.originalname)); // Unique filename
+  },
+});
+
+const upload = multer({ storage: storage });
 
 // Create Project
-router.post("/emp/projects", async (req, res) => {
-    try {
-        const { heading,date, description } = req.body;
-        const project = new Project({ heading, date, description, employees: [] });
-        await project.save();
-        res.status(201).json(project);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
+router.post("/emp/projects", upload.single("image"), async (req, res) => {
+  try {
+    console.log("Received Data:", req.body); // Check text data
+    console.log("Received File:", req.file); // Check file data
+
+    const { heading, date, description, totalAmount, remainingAmount } = req.body;
+
+    const newProject = new Project({
+      heading,
+      date,
+      description,
+      totalAmount: totalAmount || null,
+      remainingAmount: remainingAmount || null,
+      image: req.file ? req.file.filename : "", // Store filename
+    });
+
+    await newProject.save();
+    res.json(newProject);
+  } catch (err) {
+    console.error("Error saving project:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
 });
 
 // Get all projects
@@ -29,7 +53,88 @@ router.get("/projects", async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+// update project data
+router.put("/projects/:id", upload.single("image"), async (req, res) => {
+  try {
+    const { heading, date, description, totalAmount, remainingAmount } = req.body;
+    const updateData = { heading, date, description, totalAmount, remainingAmount };
 
+    if (req.file) updateData.image = req.file.filename; // Update image if a new one is uploaded
+
+    const updatedProject = await Project.findByIdAndUpdate(req.params.id, updateData, { new: true });
+
+    if (!updatedProject) return res.status(404).json({ message: "Project not found" });
+
+    res.json(updatedProject);
+  } catch (error) {
+    res.status(500).json({ message: "Error updating project", error });
+  }
+});
+
+///////////////////// to add material , amount, project, ///////////////////////////////////////////
+router.post('/projects/add-material/:projectId/:supplierId', async (req, res)=>{
+  try{
+    const {projectId , supplierId} =  req.params;
+    const { name , amount , description , date} = req.body
+
+    const project = await Project.findById(projectId);
+    if (!project) {
+      return res.status(404).json({ message: "Project not found" });
+    }
+    const supplier = project.suppliers.find(sup => sup.supplierId.toString() === supplierId);
+    if (!supplier) {
+      return res.status(404).json({ message: "Supplier not found in this project" });
+    }
+        // Create a new material object
+        const newMaterial = {
+          name: name,
+          payments: [{ amount, description, date: date || new Date() }]
+        };
+    
+        // Add material under the supplier
+        supplier.materials.push(newMaterial);
+    
+        // Save updated project
+        await project.save();
+    
+        res.status(201).json({ message: "Material & Payment added successfully", project });
+
+  }catch(error){
+    console.error(error);
+    res.status(500).json({ message: "Server Error", error });
+  }
+} )
+///////////////////// to add New Supplier to the project ///////////////////////////////////////////
+router.post('/projects/add-supplier/:projectId', async(req, res)=>{
+  try{
+    const { projectId } = req.params;
+    const { supplierId, name, phoneNo, materials } = req.body;
+
+    if (!supplierId || !name || !phoneNo) {
+      return res.status(400).json({ message: "Supplier details are required" });
+    }
+    const project = await Project.findById(projectId);
+    if (!project) {
+      return res.status(404).json({ message: "Project not found" });
+    }
+    const newSupplier = {
+      supplierId,
+      name,
+      phoneNo,
+      materials: materials || [], // Default to empty if not provided
+    };
+    project.suppliers.push(newSupplier);
+    await project.save();
+
+    res.status(200).json({ message: "Supplier added successfully", project });
+
+  }catch(error){
+    console.error("Error adding supplier:", error);
+    res.status(500).json({message: "insternal server errror"})
+  }
+})
+
+//////////////////////////////////////////////////////////////////////////////
 //to fexth Projects
 router.get("/projects/:projectId", async (req, res) => {
     try {
@@ -162,6 +267,168 @@ router.get("/projects/:projectId/suppliers", async (req, res) => {
 });
 
 
+// add payemnts for employee
+router.post("/projectEmpayment/:projectId/employees/:employeeId/payments",async(req, res)=>{
+  try{
+    const {projectId, employeeId} = req.params;
+    const {amount , description} = req.body;
+
+    const project= await Project.findById(projectId);
+    if(!project) return res.status(404).json({message : "Project not found"})
+
+      const employee = project.employees.find(emp => emp._id.toString() === employeeId);
+      if (!employee) return res.status(404).json({ message: "Employee not found" });
+
+      const payment = { amount, description, date: new Date() };
+      employee.payments.push(payment);
+        
+      await project.save();
+    res.status(200).json({ message: "Payment added successfully", payment });
+
+  }catch  (error){
+    res.status(500).json({ error: error.message });
+  }
+})
+
+//add supplier payment 
+router.post("/projectSpayment/:projectId/suppliers/:supplierId/materials/:materialId/payments", async(req, res)=>{
+  try{ 
+
+    const {projectId , supplierId, materialId} = req.params;
+    const {amount , description} = req.body;
+
+     const project = await Project.findById(projectId);
+     if(!project) return res.status(404).json({message : "Project not found" });
+
+     const supplier = project.suppliers.find( supp => supp.supplierId.toString() === supplierId);
+     if(!supplier) return res.status(404).json({message: "Supplier not found"})
+
+      const material = supplier.materials.find(mat => mat._id.toString() === materialId);
+      if(!material) return res.status(404).json({message: "material not found"});
+      
+      const payment = {amount , description , date: new Date()};
+      material.payments.push(payment);
+
+      await project.save()
+      res.status(200).json({message: "Payement added successfully", payment });
+
+  }catch(error){
+    res.status(500).json({message: "Error fetching suppliers", error})
+  }
+})
+ 
+// update payment details for supplier. 
+router.put("/project/:projectId/supplier/:supplierId/material/:materialId/payment/:paymentId", async(req, res)=>{
+  try{
+    const { projectId, supplierId, materialId, paymentId } = req.params;
+    const { amount, description, date } = req.body;
+
+    const project = await Project.findById(projectId);
+    if (!project) return res.status(404).json({ message: "Project not found" });
+
+    const supplier = project.suppliers.find((s) => s.supplierId.toString() === supplierId);
+    if (!supplier) return res.status(404).json({ message: "Supplier not found" });
+
+    const material = supplier.materials.find((m) => m._id.toString() === materialId);
+    if (!material) return res.status(404).json({ message: "Material not found" });
+
+    const payment = material.payments.find((p) => p._id.toString() === paymentId);
+    if (!payment) return res.status(404).json({ message: "Payment not found" });
+
+    // Update fields
+    if (amount) payment.amount = amount;
+    if (description) payment.description = description;
+    if (date) payment.date = date;
+
+    await project.save();
+    res.json({ message: "Supplier payment updated successfully", updatedPayment: payment });
+  }catch(error){
+    console.error("Error updating supplier payment:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+})
+
+//update payment for employee
+router.put("/project/:projectId/employee/:employeeId/payment/:paymentId", async(req , res)=>{
+  try{
+    const { projectId, employeeId, paymentId } = req.params;
+    const { amount, description, date } = req.body;
+
+    const project = await Project.findById(projectId);
+    if (!project) return res.status(404).json({ message: "Project not found" });
+
+    const employee = project.employees.find((e) => e._id.toString() === employeeId);
+    if (!employee) return res.status(404).json({ message: "Employee not found" });
+
+    const payment = employee.payments.find((p) => p._id.toString() === paymentId);
+    if (!payment) return res.status(404).json({ message: "Payment not found" });
+
+    // Update fields
+    if (amount) payment.amount = amount;
+    if (description) payment.description = description;
+    if (date) payment.date = date;
+
+    await project.save();
+    res.json({ message: "Employee payment updated successfully", updatedPayment: payment });
+    
+  }catch(error){
+    console.error("Error updating employee payment:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+})
+
+router.delete("/projects/:projectId/suppliers/:supplierId/materials/:materialId", async (req, res) => {
+  try {
+    const { projectId, supplierId, materialId } = req.params;
+
+    // Find project by ID
+    const project = await Project.findById(projectId);
+    if (!project) {
+      return res.status(404).json({ message: "Project not found" });
+    }
+
+    // Find the supplier in the project
+    const supplier = project.suppliers.find(
+      (sup) => sup.supplierId.toString() === supplierId
+    );
+
+    if (!supplier) {
+      return res.status(404).json({ message: "Supplier not found" });
+    }
+
+    // Filter out the material to be deleted
+    supplier.materials = supplier.materials.filter(
+      (mat) => mat._id.toString() !== materialId
+    );
+
+    // Save the updated project
+    await project.save();
+
+    res.status(200).json({ message: "Material deleted successfully", project });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
+
+module.exports = router;
+//router.post("/", async (req, res) => {
+//     try {
+//       const { supplierId, supplierName, material, paymentAmount } = req.body;
+  
+//       const newProject = new Project({
+//         supplierId,
+//         supplierName,
+//         material,
+//         paymentAmount
+//       });
+  
+//       await newProject.save();
+//       res.status(201).json(newProject);
+//     } catch (err) {
+//       res.status(500).json({ message: err.message });
+//     }
+//   });
+
 
 // Add a payment to a material in a supplier inside a project
 // router.post("/projects/:projectId/suppliers/:supplierId/materials/:materialId/payments", async (req, res) => {
@@ -210,6 +477,7 @@ router.get("/projects/:projectId/suppliers", async (req, res) => {
 // });
 
 
+
 //for putting the supplier into project.
 // router.post("/projects/:projectId/suppliers/:supplierId", async (req, res) => {
 //   try {
@@ -222,24 +490,3 @@ router.get("/projects/:projectId/suppliers", async (req, res) => {
 //       res.status(500).json({ error: error.message });
 //   }
 // });
-
-
-
-module.exports = router;
-//router.post("/", async (req, res) => {
-//     try {
-//       const { supplierId, supplierName, material, paymentAmount } = req.body;
-  
-//       const newProject = new Project({
-//         supplierId,
-//         supplierName,
-//         material,
-//         paymentAmount
-//       });
-  
-//       await newProject.save();
-//       res.status(201).json(newProject);
-//     } catch (err) {
-//       res.status(500).json({ message: err.message });
-//     }
-//   });

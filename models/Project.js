@@ -20,17 +20,20 @@ const MaterialSchema = new mongoose.Schema({
   payments: { type: [PaymentSchema], default: [] },
 });
 
-const ProjectSupplierSchema = new mongoose.Schema({
-  supplierId: { type: mongoose.Schema.Types.ObjectId, ref: "Supplier" },  
-  name: { type: String, required: true },
-  phoneNo: { type: String, required: true },
-  materials: { type: [MaterialSchema], default: [] }, // Each supplier can have multiple materials inside the project
-});
+// const ProjectSupplierSchema = new mongoose.Schema({
+//   supplierId: { type: mongoose.Schema.Types.ObjectId, ref: "Supplier" },  
+//   name: { type: String, required: true },
+//   phoneNo: { type: String, required: true },
+//   materials: { type: [MaterialSchema], default: [] }, // Each supplier can have multiple materials inside the project
+// });
 
 const ProjectSchema = new mongoose.Schema({
-  heading: String,
+  heading:  { type: String, required: true },
   date: { type: Date, default: Date.now },
-  description: String,
+  description:  { type: String, required: true },
+  totalAmount: { type: Number, default: null },
+  remainingAmount: { type: Number, default: null },
+  image: { type: String, default: "" },
   employees: [EmployeeSchema],
   suppliers:  [
     {

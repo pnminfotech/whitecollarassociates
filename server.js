@@ -6,6 +6,10 @@ const formRoutes = require('./routes/formRoutes'); // Routes
 const maintenanceRoutes = require('./routes/MaintRoutes');
 const supplierRoutes = require('./routes/supplierRoutes');
 const ProjectRoutes = require('./routes/Project')
+
+const lightBillRoutes = require("./routes/lightBillRoutes");
+const otherExpenseRoutes = require('./routes/otherExpenseRoutes');
+
 const connectDB = require('./config/db'); // Database connection logic
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
@@ -19,14 +23,22 @@ const fs = require('fs');
 // Middleware
 app.use(cors());
 app.use(express.json());
-
+const path = require("path");
 // Routes
 app.use('/api', formRoutes);
 app.use('/api', authRoutes);
 app.use("/api/maintenance", maintenanceRoutes);
 app.use("/api/suppliers", supplierRoutes);
 app.use("/api", ProjectRoutes)
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
+
+// Routes
+app.use("/api/light-bill", lightBillRoutes);
+
+
+// app.use("/api/light-bill", lightBillRoutes);
+app.use("/api/other-expense", otherExpenseRoutes);
 
 const authenticateToken = (req, res, next) => {
   const token = req.headers['authorization'];
