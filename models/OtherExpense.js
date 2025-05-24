@@ -14,6 +14,11 @@ const otherExpenseSchema = new mongoose.Schema({
     type: Date,
     required: true,
   },
+   status: {
+    type: String,
+    enum: ['paid', 'pending'],
+    default: 'pending'
+  },
 }, {
   timestamps: true
 });

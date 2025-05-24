@@ -27,9 +27,9 @@ const LightBillEntry = require("../models/LightBillEntry");
 
 exports.createLightBill = async (req, res) => {
   try {
-    const { roomNo, meterNo, totalReading, amount, date } = req.body;
+    const { roomNo, meterNo, totalReading, amount,status, date } = req.body;
 
-    const bill = new LightBillEntry({ roomNo, meterNo, totalReading, amount, date });
+    const bill = new LightBillEntry({ roomNo, meterNo, totalReading, amount,status, date });
     await bill.save();
 
     res.status(201).json({ message: "Light bill saved successfully." });

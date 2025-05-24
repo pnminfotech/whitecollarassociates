@@ -5,6 +5,11 @@ const LightBillEntrySchema = new mongoose.Schema({
   meterNo: { type: String, required: true },
   totalReading: { type: Number, required: true },
   amount: { type: Number, required: true },
+   status: {
+    type: String,
+    enum: ['paid', 'pending'],
+    default: 'pending'
+  },
   date: { type: Date, required: true },
 });
 
