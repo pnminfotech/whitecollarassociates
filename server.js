@@ -6,7 +6,7 @@ const formRoutes = require('./routes/formRoutes'); // Routes
 const maintenanceRoutes = require('./routes/MaintRoutes');
 const supplierRoutes = require('./routes/supplierRoutes');
 const ProjectRoutes = require('./routes/Project')
-
+const roomRoutes = require('./routes/roomRoutes');
 const lightBillRoutes = require("./routes/lightBillRoutes");
 const otherExpenseRoutes = require('./routes/otherExpenseRoutes');
 
@@ -31,7 +31,7 @@ app.use("/api/maintenance", maintenanceRoutes);
 app.use("/api/suppliers", supplierRoutes);
 app.use("/api", ProjectRoutes)
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-
+app.use('/api/rooms', roomRoutes);
 
 // Routes
 app.use("/api/light-bill", lightBillRoutes);

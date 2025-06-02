@@ -3,9 +3,9 @@ const OtherExpense = require('../models/OtherExpense');
 // POST: Create new expense
 const createOtherExpense = async (req, res) => {
   try {
-    const { roomNo, mainAmount, expenses, date , status} = req.body;
+    const {  mainAmount, expenses, date , status} = req.body;
 
-    const newExpense = new OtherExpense({roomNo, mainAmount, expenses, date, status });
+    const newExpense = new OtherExpense({ mainAmount, expenses, date, status });
     await newExpense.save();
 
     res.status(201).json({ message: "Other expense saved successfully", data: newExpense });

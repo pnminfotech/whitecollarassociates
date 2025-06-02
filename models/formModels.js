@@ -16,6 +16,8 @@ const formSchema = new mongoose.Schema(
     companyAddress: { type: String }, 
     dateOfJoiningCollege: { type: Date, required: true },
     dob: { type: Date, required: true },
+      // ✅ Add this line
+  baseRent: { type: Number }, 
     rents: [
       {
         rentAmount: { type: Number},

@@ -1,9 +1,13 @@
-// const LightBill = require("../models/lightBill");
+
+// const LightBillEntry = require("../models/LightBillEntry");
 
 // exports.createLightBill = async (req, res) => {
 //   try {
-//     const bill = new LightBill(req.body);
+//     const { roomNo, meterNo, totalReading, amount,status, date } = req.body;
+
+//     const bill = new LightBillEntry({ roomNo, meterNo, totalReading, amount,status, date });
 //     await bill.save();
+
 //     res.status(201).json({ message: "Light bill saved successfully." });
 //   } catch (error) {
 //     console.error(error);
@@ -13,7 +17,7 @@
 
 // exports.getAllLightBills = async (req, res) => {
 //   try {
-//     const bills = await LightBill.find().sort({ date: -1 });
+//     const bills = await LightBillEntry.find().sort({ date: -1 });
 //     res.json(bills);
 //   } catch (error) {
 //     console.error(error);
@@ -23,19 +27,64 @@
 
 
 
+
+
+
+// const LightBillEntry = require("../models/LightBillEntry");
+
 const LightBillEntry = require("../models/LightBillEntry");
 
 exports.createLightBill = async (req, res) => {
   try {
-    const { roomNo, meterNo, totalReading, amount,status, date } = req.body;
+    const {
+      name,
+      type,
+      roomNo,
+      meterNo,
+      totalReading,
+      amount,
+      salary,
+      customLabel,
+      status,
+      date
+    } = req.body;
 
-    const bill = new LightBillEntry({ roomNo, meterNo, totalReading, amount,status, date });
-    await bill.save();
+    const entryDate = new Date(date);
+    const startOfMonth = new Date(entryDate.getFullYear(), entryDate.getMonth(), 1);
+    const endOfMonth = new Date(entryDate.getFullYear(), entryDate.getMonth() + 1, 1);
 
-    res.status(201).json({ message: "Light bill saved successfully." });
+    const filter = {
+      name,
+      date: { $gte: startOfMonth, $lt: endOfMonth }
+    };
+
+    const update = {
+      name,
+      type,
+      roomNo,
+      meterNo,
+      totalReading,
+      amount,
+      salary,
+      customLabel,
+      status,
+      date
+    };
+
+    const result = await LightBillEntry.findOneAndUpdate(
+      filter,
+      update,
+      { upsert: true, new: true }
+    );
+
+    res.status(201).json({
+      message: "Light bill entry saved successfully.",
+      entry: result
+    });
+
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Failed to save light bill." });
+    res.status(500).json({ message: "Failed to save light bill entry." });
   }
 };
 
@@ -45,6 +94,6 @@ exports.getAllLightBills = async (req, res) => {
     res.json(bills);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Failed to fetch light bills." });
+    res.status(500).json({ message: "Failed to fetch light bill entries." });
   }
 };

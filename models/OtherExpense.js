@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const otherExpenseSchema = new mongoose.Schema({
-   roomNo: { type: String, required: true },
+  //  roomNo: { type: String, required: true },
     mainAmount: {
     type: Number,
     required: true,
