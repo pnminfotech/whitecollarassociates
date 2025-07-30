@@ -68,22 +68,76 @@ const getNextSrNo = async (req, res) => {
 
 const saveForm = async (req, res) => {
   try {
-    // Count total records from both collections
+    console.log("Incoming form data:", req.body);
+    console.log("Uploaded file:", req.file);
+
+    const {
+      name,
+      members,
+      joiningDate,
+      roomNo,
+      rentAmount,
+      phoneNo,
+      address,
+      depositAmount,
+      floorNo,
+    } = req.body;
+
+    const adharFile = req.file?.filename;
+
+    // ✅ Generate unique srNo
     const activeCount = await Form.countDocuments();
     const archivedCount = await Archive.countDocuments();
-    const totalCount = activeCount + archivedCount + 1; // New Sr No.
+    const srNo = (activeCount + archivedCount + 1).toString();
 
-    // Assign srNo automatically
-    req.body.srNo = totalCount.toString(); 
+    if (!name || !joiningDate || !roomNo || !address || !phoneNo || !rentAmount) {
+      return res.status(400).json({ error: "Required fields missing." });
+    }
 
-    const newForm = new Form(req.body);
-    await newForm.save();
-    
-    res.status(201).json({ message: 'Form submitted successfully', form: newForm });
+    const newForm = new Form({
+      srNo, // ✅ Use generated srNo here
+      name,
+      members,
+      joiningDate,
+
+      roomNo,
+      phoneNo,
+      address,
+      depositAmount,
+      floorNo,
+      rents: [
+        {
+          rentAmount: Number(rentAmount),
+          date: new Date(joiningDate),
+          month:
+            new Date(joiningDate).toLocaleString("default", { month: "short" }) +
+            "-" +
+            new Date(joiningDate).getFullYear().toString().slice(-2),
+        },
+      ],
+      adharFile,
+    });
+
+    const savedForm = await newForm.save();
+
+    res.status(201).json({ message: "Form saved successfully", form: savedForm });
   } catch (error) {
-    res.status(500).json({ message: 'Error submitting form', error });
+    console.error("Save form error:", error);
+
+    // 💡 Optional: Friendly duplicate srNo handler
+    if (error.code === 11000 && error.keyPattern?.srNo) {
+      return res
+        .status(400)
+        .json({ error: "Duplicate Sr. No. Please try again." });
+    }
+
+    res.status(500).json({ error: "Internal server error", message: error.message });
   }
 };
+
+
+
+
 
 // @desc Get all forms from the database
 // @route GET /api/forms
@@ -216,7 +270,7 @@ const checkAndArchiveLeaves = async () => {
 };
 
 // Schedule this to run every midnight
-setInterval(checkAndArchiveLeaves, 24 * 60 * 60 * 1000); 
+setInterval(checkAndArchiveLeaves, 24 * 60 * 60 * 1000);
 
 // Function to archive and delete form
 const archiveAndDeleteForm = async (form) => {
@@ -362,4 +416,14 @@ const rentAmountDel = async (req, res) => {
   }
 };
 
-module.exports = { getNextSrNo, rentAmountDel , processLeave , getFormById , getForms, checkAndArchiveLeaves, updateProfile , getArchivedForms,saveLeaveDate, restoreForm  , archiveForm , saveForm, getAllForms, updateForm, deleteForm ,getDuplicateForms };
+
+
+
+
+
+
+
+
+module.exports = {
+  getNextSrNo, rentAmountDel, processLeave, getFormById, getForms, checkAndArchiveLeaves, updateProfile, getArchivedForms, saveLeaveDate, restoreForm, archiveForm, saveForm, getAllForms, updateForm, deleteForm, getDuplicateForms
+};

@@ -18,16 +18,16 @@ const mongoose = require("mongoose");
 
 
 
-const LightBillEntrySchema = new mongoose.Schema({
-  name: { type: String, required: true }, // e.g., "Meter 101" or "Maushi"
-  type: { type: String, enum: ['meter', 'maushi', 'custom'], required: true },
-  roomNo: { type: String },
-  meterNo: { type: String },
-  totalReading: { type: Number },
-  amount: { type: Number },
-  salary: { type: Number },
-  customLabel: { type: String },
-  status: { type: String, enum: ['paid', 'pending'], default: 'pending' },
-  date: { type: Date, required: true }
+//const mongoose = require("mongoose");
+
+const lightBillSchema = new mongoose.Schema({
+  meterNo: { type: String, required: true },
+  oldUnits: { type: Number, required: true },
+  newUnits: { type: Number, required: true },
+  amount: { type: Number, required: true },
+  month: { type: String, required: true },
+  year: { type: Number, required: true },
+  date: { type: Date, default: Date.now } // optional
 });
-module.exports = mongoose.model("LightBillEntry", LightBillEntrySchema);
+
+module.exports = mongoose.model("LightBillEntry", lightBillSchema);

@@ -1,12 +1,14 @@
 const express = require('express');
 // const Form = require('../models/formModel'); // ✅ Adjust path if different
 const Form = require('../models/formModels');
-const { getNextSrNo, rentAmountDel , processLeave ,getFormById, getForms , updateProfile , getArchivedForms,saveLeaveDate,
-restoreForm, archiveForm , getDuplicateForms,deleteForm,updateForm, saveForm, getAllForms } = require('../controllers/formController');
+const multer = require("multer");
+const path = require("path");
+const { getNextSrNo, rentAmountDel, processLeave, getFormById, getForms, updateProfile, getArchivedForms, saveLeaveDate,
+  restoreForm, archiveForm, getDuplicateForms, deleteForm, updateForm, saveForm, getAllForms } = require('../controllers/formController');
 const router = express.Router();
 
 // Route to save form data
-router.post('/forms', saveForm);
+// router.post('/forms', saveForm);
 router.get('/forms/count', getNextSrNo);
 
 // Route to get all form data
@@ -39,5 +41,21 @@ router.post('/cancel-leave', async (req, res) => {
     res.status(500).json({ success: false, error: "Error cancelling leave" });
   }
 });
+
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "uploads/"); // Ensure this folder exists
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    const filename = Date.now() + ext;
+    cb(null, filename);
+  },
+});
+
+const upload = multer({ storage });
+
+router.post("/forms", upload.single("adharFile"), saveForm);
 
 module.exports = router;

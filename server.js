@@ -1,5 +1,5 @@
 const express = require('express');
-const mongoose = require('mongoose');
+//const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const formRoutes = require('./routes/formRoutes'); // Routes
@@ -19,7 +19,15 @@ app.use(express.json());
 dotenv.config();
 const authRoutes = require('./routes/authRoutes');
 const SECRET_KEY = '.pnmINFOtech.';
-const fs = require('fs');
+//const fs = require('fs');
+
+
+
+
+
+
+
+
 // Middleware
 app.use(cors());
 app.use(express.json());
@@ -35,10 +43,13 @@ app.use('/api/rooms', roomRoutes);
 
 // Routes
 app.use("/api/light-bill", lightBillRoutes);
-
+app.use("/api/light-bill", lightBillRoutes);
 
 // app.use("/api/light-bill", lightBillRoutes);
 app.use("/api/other-expense", otherExpenseRoutes);
+// app.use("/api/light-bill", lightBillRoutes);
+
+
 
 const authenticateToken = (req, res, next) => {
   const token = req.headers['authorization'];
@@ -65,7 +76,7 @@ app.get('/protected', authenticateToken, (req, res) => {
 connectDB();
 
 // Start the server
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });

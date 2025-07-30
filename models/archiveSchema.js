@@ -8,22 +8,24 @@ const archiveSchema = new mongoose.Schema(
     joiningDate: { type: Date, required: true },
     roomNo: { type: String, required: true },
     depositAmount: { type: Number, required: true },
-    phoneNo : {type: Number, required : true},
+    phoneNo: { type: Number, required: true },
     address: { type: String, required: true },
-    relativeAddress1: { type: String },
-    relativeAddress2: { type: String },
+
+    // relativeAddress1: { type: String },
+    // relativeAddress2: { type: String },
     floorNo: { type: String, required: true },
-    bedNo: { type: String, required: true },
-    companyAddress: { type: String },
-    dateOfJoiningCollege: { type: Date, required: true },
-    dob: { type: Date, required: true },
+    // bedNo: { type: String, required: true },
+    // companyAddress: { type: String },
+    // dateOfJoiningCollege: { type: Date, required: true },
+    // dob: { type: Date, required: true },
     rents: [
       {
         rentAmount: { type: Number },
         date: { type: Date },
       },
     ],
-    leaveDate: { type: String , required: true },
+    adharFile: { type: String },
+    // leaveDate: { type: String , required: true },
   });
 
 module.exports = mongoose.model('Archive', archiveSchema);
