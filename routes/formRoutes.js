@@ -4,7 +4,7 @@ const Form = require('../models/formModels');
 const multer = require("multer");
 const path = require("path");
 const { getNextSrNo, rentAmountDel, processLeave, getFormById, getForms, updateProfile, getArchivedForms, saveLeaveDate,
-  restoreForm, archiveForm, getDuplicateForms, deleteForm, updateForm, saveForm, getAllForms } = require('../controllers/formController');
+  restoreForm, archiveForm, getDuplicateForms, deleteForm, updateForm, saveForm, getAllForms, getAvailableRooms } = require('../controllers/formController');
 const router = express.Router();
 
 // Route to save form data
@@ -13,7 +13,7 @@ router.get('/forms/count', getNextSrNo);
 
 // Route to get all form data
 router.get('/', getAllForms);
-
+router.get('/available-rooms', getAvailableRooms);
 router.delete('/form/:id', deleteForm);
 router.get('/duplicateforms', getDuplicateForms);
 

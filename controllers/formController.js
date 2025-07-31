@@ -56,85 +56,44 @@ cron.schedule("0 0 * * *", async () => {
 
 const getNextSrNo = async (req, res) => {
   try {
-    const activeCount = await Form.countDocuments();
-    const archivedCount = await Archive.countDocuments();
-    const nextSrNo = (activeCount + archivedCount + 1).toString();
+    const latestForm = await Form.findOne().sort({ srNo: -1 }).limit(1);
+    const latestArchive = await Archive.findOne().sort({ srNo: -1 }).limit(1);
 
+    const lastSrNo = Math.max(
+      latestForm?.srNo || 0,
+      latestArchive?.srNo || 0
+    );
+
+    const nextSrNo = lastSrNo + 1;
     res.status(200).json({ nextSrNo });
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching Sr. No.', error });
+    res.status(500).json({ message: 'Error fetching Sr. No.', error: error.message });
   }
 };
+
 
 const saveForm = async (req, res) => {
   try {
-    console.log("Incoming form data:", req.body);
-    console.log("Uploaded file:", req.file);
+    // 🔁 Find the latest srNo from Form and Archive collections
+    const latestForm = await Form.findOne().sort({ srNo: -1 }).limit(1);
+    const latestArchive = await Archive.findOne().sort({ srNo: -1 }).limit(1);
 
-    const {
-      name,
-      members,
-      joiningDate,
-      roomNo,
-      rentAmount,
-      phoneNo,
-      address,
-      depositAmount,
-      floorNo,
-    } = req.body;
+    const lastSrNo = Math.max(
+      Number(latestForm?.srNo || 0),
+      Number(latestArchive?.srNo || 0)
+    );
 
-    const adharFile = req.file?.filename;
+    req.body.srNo = (lastSrNo + 1);  // ✅ Always unique
 
-    // ✅ Generate unique srNo
-    const activeCount = await Form.countDocuments();
-    const archivedCount = await Archive.countDocuments();
-    const srNo = (activeCount + archivedCount + 1).toString();
+    const newForm = new Form(req.body);
+    await newForm.save();
 
-    if (!name || !joiningDate || !roomNo || !address || !phoneNo || !rentAmount) {
-      return res.status(400).json({ error: "Required fields missing." });
-    }
-
-    const newForm = new Form({
-      srNo, // ✅ Use generated srNo here
-      name,
-      members,
-      joiningDate,
-
-      roomNo,
-      phoneNo,
-      address,
-      depositAmount,
-      floorNo,
-      rents: [
-        {
-          rentAmount: Number(rentAmount),
-          date: new Date(joiningDate),
-          month:
-            new Date(joiningDate).toLocaleString("default", { month: "short" }) +
-            "-" +
-            new Date(joiningDate).getFullYear().toString().slice(-2),
-        },
-      ],
-      adharFile,
-    });
-
-    const savedForm = await newForm.save();
-
-    res.status(201).json({ message: "Form saved successfully", form: savedForm });
+    res.status(201).json({ message: 'Form submitted successfully', form: newForm });
   } catch (error) {
-    console.error("Save form error:", error);
-
-    // 💡 Optional: Friendly duplicate srNo handler
-    if (error.code === 11000 && error.keyPattern?.srNo) {
-      return res
-        .status(400)
-        .json({ error: "Duplicate Sr. No. Please try again." });
-    }
-
-    res.status(500).json({ error: "Internal server error", message: error.message });
+    console.error('❌ Error in saveForm:', error);
+    res.status(500).json({ message: 'Error submitting form', error: error.message });
   }
 };
-
 
 
 
@@ -417,6 +376,26 @@ const rentAmountDel = async (req, res) => {
 };
 
 
+const getAvailableRooms = async (req, res) => {
+  try {
+    // Get all active (non-archived) tenants who don't have a leaveDate OR have a future leaveDate
+    const activeForms = await Form.find({
+      $or: [
+        { leaveDate: { $exists: false } },
+        { leaveDate: { $gt: new Date() } }
+      ]
+    });
+
+    // Create a set of occupied room identifiers
+    const occupiedRooms = new Set(
+      activeForms.map(form => `${form.floorNo}-${form.roomNo}`)
+    );
+
+    res.status(200).json({ occupiedRooms: Array.from(occupiedRooms) });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch available rooms", error });
+  }
+};
 
 
 
@@ -425,5 +404,5 @@ const rentAmountDel = async (req, res) => {
 
 
 module.exports = {
-  getNextSrNo, rentAmountDel, processLeave, getFormById, getForms, checkAndArchiveLeaves, updateProfile, getArchivedForms, saveLeaveDate, restoreForm, archiveForm, saveForm, getAllForms, updateForm, deleteForm, getDuplicateForms
+  getNextSrNo, rentAmountDel, processLeave, getFormById, getForms, checkAndArchiveLeaves, updateProfile, getArchivedForms, saveLeaveDate, restoreForm, archiveForm, saveForm, getAllForms, updateForm, deleteForm, getDuplicateForms, getAvailableRooms
 };

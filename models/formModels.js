@@ -1,7 +1,11 @@
 const mongoose = require('mongoose');
 
 const formSchema = new mongoose.Schema({
-  srNo: { type: String, required: true, unique: true },
+  srNo: {
+  type: Number,
+  unique: true,
+  required: true
+},
   name: { type: String, required: true },
   members: { type: Number, required: true },
 
