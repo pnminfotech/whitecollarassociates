@@ -43,6 +43,23 @@ router.post('/cancel-leave', async (req, res) => {
 });
 
 
+// GET tenants by room number
+router.get('/tenants', async (req, res) => {
+  const { roomNo } = req.query;
+  try {
+    const tenants = await Form.find({ roomNo });
+    const names = tenants.map((t) => t.name);
+    res.json(names);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Failed to fetch tenants');
+  }
+});
+
+
+
+
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, "uploads/"); // Ensure this folder exists

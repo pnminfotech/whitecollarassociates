@@ -22,6 +22,8 @@ const SECRET_KEY = '.pnmINFOtech.';
 //const fs = require('fs');
 
 
+// const reportRoutes = require('./routes/report');
+// app.use('/api/reports', reportRoutes);
 
 
 
@@ -74,6 +76,22 @@ app.get('/protected', authenticateToken, (req, res) => {
 
 // Connect to the database
 connectDB();
+
+// app.use('/api/reports', require('./routes/report'));
+
+
+
+app.get('/api/reports', (req, res) => {
+  res.json({ message: 'report data' }); // or actual report
+});
+
+
+
+
+
+
+
+
 
 // Start the server
 const PORT = process.env.PORT || 4000;
