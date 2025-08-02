@@ -81,60 +81,69 @@ exports.getUnpaidAmount = async (req, res) => {
 // ✅ Update light bill status
 // ✅ Update light bill status (paid/pending)
 exports.updateLightBillStatus = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { status } = req.body;
+  const { id } = req.params;
+  const { status } = req.body;
 
-    if (!["paid", "pending"].includes(status)) {
-      return res.status(400).json({ message: "Invalid status value." });
-    }
+  console.log("Updating status for ID:", id); // Add this for debugging
 
-    const updatedEntry = await LightBillEntry.findByIdAndUpdate(
-      id,
-      { status },
-      { new: true }
-    );
-
-    if (!updatedEntry) {
-      return res.status(404).json({ message: "Light bill entry not found." });
-    }
-
-    res.json({ message: "Status updated successfully.", updatedEntry });
-  } catch (error) {
-    console.error("Error updating light bill status:", error);
-    res.status(500).json({ message: "Internal server error." });
+  if (!["paid", "pending"].includes(status)) {
+    return res.status(400).json({ message: "Invalid status value." });
   }
+
+  const updated = await LightBillEntry.findByIdAndUpdate(
+    id,
+    { status },
+    { new: true }
+  );
+
+  if (!updated) {
+    return res.status(404).json({ message: "Light bill not found." });
+  }
+
+  res.json({ message: "Status updated", updated });
 };
 
 
-// ✅ Full update: amount, date, status (used in PUT /:id)
+
 exports.updateLightBill = async (req, res) => {
   try {
     const { id } = req.params;
     const { amount, date, status } = req.body;
 
-    // Validate input (optional)
-    if (!amount || !date || !status) {
-      return res.status(400).json({ message: "All fields are required." });
-    }
-
-    const updatedEntry = await LightBillEntry.findByIdAndUpdate(
+    const updated = await LightBillEntry.findByIdAndUpdate(
       id,
       { amount, date, status },
       { new: true }
     );
 
-    if (!updatedEntry) {
-      return res.status(404).json({ message: "Light bill entry not found." });
-    }
+    if (!updated) return res.status(404).json({ message: "Not found" });
 
-    res.json({ message: "Light bill updated successfully.", updatedEntry });
-  } catch (error) {
-    console.error("Error updating light bill:", error);
-    res.status(500).json({ message: "Failed to update light bill." });
+    res.json({ message: "Light bill updated", updated });
+  } catch (err) {
+    console.error("Update error:", err);
+    res.status(500).json({ message: "Update failed" });
   }
 };
 
+
+// ✅ Delete light bill by ID
+exports.deleteLightBill = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const deleted = await LightBillEntry.findByIdAndDelete(id);
+
+    if (!deleted) {
+      return res.status(404).json({ message: "Light bill not found" });
+    }
+
+    res.json({ message: "Deleted successfully" });
+
+  } catch (error) {
+    console.error("Error deleting light bill:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
 
 
 

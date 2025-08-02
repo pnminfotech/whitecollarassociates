@@ -9,6 +9,11 @@ const {
   updateLightBill, // ✅ full update
 } = require("../controllers/lightBillController");
 
+
+// app.use("/api/light-bill", require("./routes/lightBillRoutes"));
+
+const lightBillController = require('../controllers/lightBillController');
+
 // Add light bill
 router.post("/", createLightBill);
 
@@ -23,5 +28,8 @@ router.patch("/status/:id", updateLightBillStatus);
 
 // ✅ Full update: amount, date, status
 router.put("/:id", updateLightBill);
+
+router.put('/:id', lightBillController.updateLightBill); // ✅ ADD THIS
+router.delete('/:id', lightBillController.deleteLightBill); //
 
 module.exports = router;

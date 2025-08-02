@@ -32,7 +32,7 @@ const lightBillSchema = new mongoose.Schema({
   status: {
     type: String,
     enum: ['paid', 'pending'],
-    default: 'pending'
+    // default: 'pending'
   },
   date: { type: Date, default: Date.now }
 });

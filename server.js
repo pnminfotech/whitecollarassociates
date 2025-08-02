@@ -28,7 +28,6 @@ const SECRET_KEY = '.pnmINFOtech.';
 
 
 
-app.use("/api/light-bill", require("./routes/lightBillRoutes"));
 
 
 // Middleware
@@ -46,7 +45,7 @@ app.use('/api/rooms', roomRoutes);
 
 // Routes
 app.use("/api/light-bill", lightBillRoutes);
-app.use("/api/light-bill", lightBillRoutes);
+
 
 // app.use("/api/light-bill", lightBillRoutes);
 app.use("/api/other-expense", otherExpenseRoutes);
