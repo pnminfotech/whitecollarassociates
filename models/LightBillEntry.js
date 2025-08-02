@@ -20,6 +20,7 @@ const mongoose = require("mongoose");
 
 //const mongoose = require("mongoose");
 
+
 const lightBillSchema = new mongoose.Schema({
   meterNo: { type: String, required: true },
   oldUnits: { type: Number, required: true },
@@ -27,7 +28,13 @@ const lightBillSchema = new mongoose.Schema({
   amount: { type: Number, required: true },
   month: { type: String, required: true },
   year: { type: Number, required: true },
-  date: { type: Date, default: Date.now } // optional
+  roomNo: { type: String, default: '' },
+  status: {
+    type: String,
+    enum: ['paid', 'pending'],
+    default: 'pending'
+  },
+  date: { type: Date, default: Date.now }
 });
 
 module.exports = mongoose.model("LightBillEntry", lightBillSchema);

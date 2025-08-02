@@ -28,6 +28,7 @@ const SECRET_KEY = '.pnmINFOtech.';
 
 
 
+app.use("/api/light-bill", require("./routes/lightBillRoutes"));
 
 
 // Middleware

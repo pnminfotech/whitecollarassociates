@@ -78,6 +78,63 @@ exports.getUnpaidAmount = async (req, res) => {
 };
 
 
+// ✅ Update light bill status
+// ✅ Update light bill status (paid/pending)
+exports.updateLightBillStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!["paid", "pending"].includes(status)) {
+      return res.status(400).json({ message: "Invalid status value." });
+    }
+
+    const updatedEntry = await LightBillEntry.findByIdAndUpdate(
+      id,
+      { status },
+      { new: true }
+    );
+
+    if (!updatedEntry) {
+      return res.status(404).json({ message: "Light bill entry not found." });
+    }
+
+    res.json({ message: "Status updated successfully.", updatedEntry });
+  } catch (error) {
+    console.error("Error updating light bill status:", error);
+    res.status(500).json({ message: "Internal server error." });
+  }
+};
+
+
+// ✅ Full update: amount, date, status (used in PUT /:id)
+exports.updateLightBill = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { amount, date, status } = req.body;
+
+    // Validate input (optional)
+    if (!amount || !date || !status) {
+      return res.status(400).json({ message: "All fields are required." });
+    }
+
+    const updatedEntry = await LightBillEntry.findByIdAndUpdate(
+      id,
+      { amount, date, status },
+      { new: true }
+    );
+
+    if (!updatedEntry) {
+      return res.status(404).json({ message: "Light bill entry not found." });
+    }
+
+    res.json({ message: "Light bill updated successfully.", updatedEntry });
+  } catch (error) {
+    console.error("Error updating light bill:", error);
+    res.status(500).json({ message: "Failed to update light bill." });
+  }
+};
+
 
 
 

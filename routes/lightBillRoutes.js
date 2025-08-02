@@ -4,12 +4,24 @@ const {
   createLightBill,
   getAllLightBills,
   getUnpaidAmount,
-  getMeterByRoom
+  getMeterByRoom,
+  updateLightBillStatus,
+  updateLightBill, // ✅ full update
 } = require("../controllers/lightBillController");
 
-router.post("/", createLightBill);          // Add light bill
-router.get("/all", getAllLightBills);          // Get all bills
-router.get("/unpaid", getUnpaidAmount);     // Get unpaid amount by meterNo
-//router.get("/get-meter", getMeterByRoom);   // Get meterNo by roomNo
+// Add light bill
+router.post("/", createLightBill);
+
+// Get all bills
+router.get("/all", getAllLightBills);
+
+// Get unpaid amount
+router.get("/unpaid", getUnpaidAmount);
+
+// ✅ Update only status
+router.patch("/status/:id", updateLightBillStatus);
+
+// ✅ Full update: amount, date, status
+router.put("/:id", updateLightBill);
 
 module.exports = router;
