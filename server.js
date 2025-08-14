@@ -25,6 +25,7 @@ const SECRET_KEY = '.pnmINFOtech.';
 // const reportRoutes = require('./routes/report');
 // app.use('/api/reports', reportRoutes);
 
+const monthlyBillRoutes = require("./routes/monthlyBillRoutes");
 
 
 
@@ -45,13 +46,13 @@ app.use('/api/rooms', roomRoutes);
 
 // Routes
 app.use("/api/light-bill", lightBillRoutes);
-
+app.use(express.json());
 
 // app.use("/api/light-bill", lightBillRoutes);
 app.use("/api/other-expense", otherExpenseRoutes);
 // app.use("/api/light-bill", lightBillRoutes);
-
-
+app.use("/api/monthly-bills", monthlyBillRoutes);
+// app.use("/api/monthly-bills", require("./routes/monthlyBillRoutes"));
 
 const authenticateToken = (req, res, next) => {
   const token = req.headers['authorization'];
