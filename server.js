@@ -32,7 +32,13 @@ const monthlyBillRoutes = require("./routes/monthlyBillRoutes");
 
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: "https://pnminfotech.com",   // your frontend domain
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true
+}));
+
 app.use(express.json());
 const path = require("path");
 // Routes
